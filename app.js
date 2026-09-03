@@ -4,6 +4,7 @@
   const cfg = window.APP_CONFIG || {};
   const API_URL = String(cfg.API_URL || "").trim();
   const API_CONFIGURED = /^https:\/\/script\.google\.com\//.test(API_URL);
+  const CONFIG_POLL_MS = 3000;
 
   const els = {
     matchTitle: document.getElementById("match-title"),
@@ -39,6 +40,7 @@
     demo: !API_CONFIGURED,
     submitting: false
   };
+  let pollingConfig = false;
 
   const CATEGORY_META = {
     dotd: { title: "Dick of the Day", emoji: "💩" },
@@ -66,12 +68,29 @@
     return `athena_h2_voted_${matchId}_phase_${phase}`;
   }
 
+  function pendingVoteKey(matchId, phase) {
+    return `athena_h2_pending_${matchId}_phase_${phase}`;
+  }
+
   function hasLocalVote(matchId, phase) {
     return localStorage.getItem(localVoteKey(matchId, phase)) === "1";
   }
 
+  function hasPendingVote(matchId, phase) {
+    return localStorage.getItem(pendingVoteKey(matchId, phase)) === "1";
+  }
+
   function markLocalVote(matchId, phase) {
     localStorage.setItem(localVoteKey(matchId, phase), "1");
+    localStorage.removeItem(pendingVoteKey(matchId, phase));
+  }
+
+  function markPendingVote(matchId, phase) {
+    localStorage.setItem(pendingVoteKey(matchId, phase), "1");
+  }
+
+  function clearPendingVote(matchId, phase) {
+    localStorage.removeItem(pendingVoteKey(matchId, phase));
   }
 
   function jsonp(params, timeoutMs = 8000) {
@@ -87,7 +106,7 @@
       }
       window[cb] = data => cleanup(null, data);
       const url = new URL(API_URL);
-      Object.entries({ ...params, callback: cb }).forEach(([k, v]) => url.searchParams.set(k, v));
+      Object.entries({ ...params, callback: cb, _ts: Date.now() }).forEach(([k, v]) => url.searchParams.set(k, v));
       script.src = url.toString();
       script.onerror = () => cleanup(new Error("Kan de backend niet bereiken."));
       document.head.appendChild(script);
@@ -141,10 +160,15 @@
     clearMessage();
   }
 
+  function showForm() {
+    els.success.classList.add("hidden");
+    els.form.classList.remove("hidden");
+  }
+
   function validateReady() {
     if (state.submitting || !state.ready) return false;
     if (!state.match || state.match.status !== "open") return false;
-    if (hasLocalVote(state.match.matchId, state.phase) && !state.demo) return false;
+    if ((hasLocalVote(state.match.matchId, state.phase) || hasPendingVote(state.match.matchId, state.phase)) && !state.demo) return false;
     if (!selected()) return false;
     if (state.requireVoterCode && !els.voterCode.value.trim()) return false;
     return true;
@@ -163,9 +187,15 @@
       return;
     }
 
+    const previousPhase = state.phase;
+    const previousMatchId = state.match && state.match.matchId;
+    const nextPhase = Number(data.phase || 1);
+    const nextMatchId = data.match && data.match.matchId;
+    const phaseChanged = Boolean(previousMatchId && nextMatchId && (previousMatchId !== nextMatchId || previousPhase !== nextPhase));
+
     state = {
       match: data.match,
-      phase: Number(data.phase || 1),
+      phase: nextPhase,
       category: data.category || "dotd",
       round: Number(data.round || 1),
       choices: Array.isArray(data.choices) ? data.choices : [],
@@ -178,6 +208,11 @@
     };
 
     if (!state.match) return showMessage("Geen wedstrijd gevonden.");
+
+    if (phaseChanged) {
+      showForm();
+      els.voterCode.value = "";
+    }
 
     els.matchTitle.textContent = `${state.match.home} – ${state.match.away}`;
     const timeText = state.match.startTime && state.match.startTime !== "00:00" ? ` · ${state.match.startTime}` : " · tijd volgt";
@@ -198,12 +233,17 @@
     els.voterCodeWrap.classList.toggle("hidden", !state.requireVoterCode);
 
     if (!state.ready) {
+      showForm();
       showMessage(state.readyMessage || "Deze fase kan nog niet starten.");
     } else if (state.match.status !== "open") {
+      showForm();
       showMessage(state.match.status === "closed" ? "De stemming is gesloten." : "De stemming is nog niet geopend.");
     } else if (hasLocalVote(state.match.matchId, state.phase) && !state.demo) {
       showSuccess(`Je hebt al gestemd in fase ${state.phase}. Er zijn nu ${state.voteCount} stemmen binnen.`);
+    } else if (hasPendingVote(state.match.matchId, state.phase) && !state.demo) {
+      showSuccess("Je stem is verstuurd en wordt nog gecontroleerd. De knop blijft geblokkeerd om dubbel stemmen te voorkomen.");
     } else {
+      showForm();
       clearMessage();
     }
 
@@ -211,12 +251,16 @@
   }
 
   async function pollReceipt(submissionId) {
-    for (let i = 0; i < 8; i += 1) {
-      await new Promise(r => setTimeout(r, i === 0 ? 650 : 500));
-      const result = await jsonp({ action: "receipt", submissionId }, 5000);
-      if (result?.found) return result;
+    for (let i = 0; i < 16; i += 1) {
+      await new Promise(r => setTimeout(r, i === 0 ? 650 : 700));
+      try {
+        const result = await jsonp({ action: "receipt", submissionId }, 5000);
+        if (result?.found) return result;
+      } catch (err) {
+        // Houd de stem vergrendeld bij een tijdelijke netwerkfout en probeer opnieuw.
+      }
     }
-    throw new Error("Geen ontvangstbevestiging ontvangen.");
+    return null;
   }
 
   async function handleSubmit(event) {
@@ -225,22 +269,25 @@
     if (!validateReady()) return;
 
     const chosenPlayer = selected();
+    const matchId = state.match.matchId;
+    const phase = state.phase;
     state.submitting = true;
+    markPendingVote(matchId, phase);
     els.submit.disabled = true;
     els.submit.querySelector("span:first-child").textContent = "Versturen…";
     Array.from(els.form.elements).forEach(el => { if (el !== els.submit) el.disabled = true; });
 
     if (state.demo) {
-      markLocalVote(state.match.matchId, state.phase);
+      markLocalVote(matchId, phase);
       showSuccess("Demo-stem ontvangen.");
       return;
     }
 
-    const submissionId = randomId(`phase${state.phase}`);
+    const submissionId = randomId(`phase${phase}`);
     const payload = {
       submissionId,
-      matchId: state.match.matchId,
-      phase: state.phase,
+      matchId,
+      phase,
       browserId: browserId(),
       voterCode: els.voterCode.value.trim().toUpperCase(),
       player: chosenPlayer,
@@ -252,8 +299,15 @@
       els.postPayload.value = JSON.stringify(payload);
       els.postForm.submit();
       const receipt = await pollReceipt(submissionId);
-      if (!receipt.ok) throw new Error(receipt.message || "Stem kon niet worden opgeslagen.");
-      markLocalVote(state.match.matchId, state.phase);
+      if (!receipt) {
+        showSuccess("Je stem is verstuurd. De ontvangstbevestiging laat op zich wachten; de knop blijft geblokkeerd om dubbel stemmen te voorkomen.");
+        return;
+      }
+      if (!receipt.ok) {
+        clearPendingVote(matchId, phase);
+        throw new Error(receipt.message || "Stem kon niet worden opgeslagen.");
+      }
+      markLocalVote(matchId, phase);
       showSuccess(receipt.message || "Je stem is opgeslagen.");
     } catch (err) {
       state.submitting = false;
@@ -261,6 +315,20 @@
       els.submit.querySelector("span:first-child").textContent = "Stem versturen";
       showMessage(err.message || "Er ging iets mis bij het versturen.");
       updateButton();
+    }
+  }
+
+  async function refreshConfig() {
+    if (pollingConfig || !API_CONFIGURED) return;
+    pollingConfig = true;
+    try {
+      const matchId = new URLSearchParams(location.search).get("match") || "";
+      const data = await jsonp({ action: "config", matchId }, 6000);
+      if (data?.ok) render(data);
+    } catch (err) {
+      // Stil negeren: de volgende poll probeert opnieuw.
+    } finally {
+      pollingConfig = false;
     }
   }
 
@@ -275,6 +343,7 @@
       const data = await jsonp({ action: "config", matchId });
       if (!data?.ok) throw new Error(data?.message || "Configuratie kon niet worden geladen.");
       render(data);
+      setInterval(refreshConfig, CONFIG_POLL_MS);
     } catch (err) {
       showMessage(err.message || "De site kon de backend niet laden.");
       els.submit.disabled = true;
