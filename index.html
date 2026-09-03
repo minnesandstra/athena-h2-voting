@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1736" />
+  <meta name="description" content="Stem op de AthenA H2-O Match Awards." />
+  <title>AthenA H2-O · Match Awards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="brand-mark" aria-hidden="true">A</div>
+      <div>
+        <p class="eyebrow">ATHENA H2-O</p>
+        <h1>Match Awards</h1>
+        <p class="intro">Eén stem. Drie belangrijke prijzen.</p>
+      </div>
+    </header>
+
+    <section class="match-card" aria-live="polite">
+      <div>
+        <p class="eyebrow">DEZE WEDSTRIJD</p>
+        <h2 id="match-title">Wedstrijd laden…</h2>
+        <p id="match-meta" class="muted"></p>
+      </div>
+      <span id="status-pill" class="pill">Laden…</span>
+    </section>
+
+    <div id="message" class="message hidden" role="status"></div>
+
+    <form id="vote-form" class="vote-form" novalidate>
+      <section class="award-card">
+        <div class="award-heading">
+          <span class="emoji" aria-hidden="true">🏆</span>
+          <div>
+            <p class="step">01</p>
+            <h2>Man of the Match</h2>
+            <p>Wie was vandaag de beste?</p>
+          </div>
+        </div>
+        <div id="motm-options" class="option-grid" role="radiogroup" aria-label="Man of the Match"></div>
+      </section>
+
+      <section class="award-card">
+        <div class="award-heading">
+          <span class="emoji" aria-hidden="true">💩</span>
+          <div>
+            <p class="step">02</p>
+            <h2>Dick of the Day</h2>
+            <p>Wie verdient 'm vandaag?</p>
+          </div>
+        </div>
+        <div id="dotd-options" class="option-grid" role="radiogroup" aria-label="Dick of the Day"></div>
+      </section>
+
+      <section class="award-card">
+        <div class="award-heading">
+          <span class="emoji" aria-hidden="true">🔥</span>
+          <div>
+            <p class="step">03</p>
+            <h2>Sexy Moment</h2>
+            <p>Welke actie moet de geschiedenisboeken in?</p>
+          </div>
+        </div>
+        <div id="sexy-options" class="option-grid"></div>
+        <div id="sexy-free-text-wrap" class="field hidden">
+          <label for="sexy-free-text">Omschrijf het moment</label>
+          <textarea id="sexy-free-text" maxlength="160" placeholder="Bijv. die backhand in de kruising…"></textarea>
+        </div>
+      </section>
+
+      <section id="voter-code-wrap" class="award-card compact hidden">
+        <div class="field">
+          <label for="voter-code">Stemcode</label>
+          <input id="voter-code" type="text" autocomplete="one-time-code" maxlength="16" placeholder="Bijv. K7M2Q9" />
+          <p class="hint">Iedere code kan één keer per wedstrijd worden gebruikt.</p>
+        </div>
+      </section>
+
+      <button id="submit-button" class="submit-button" type="submit" disabled>
+        <span>Stem versturen</span>
+        <span aria-hidden="true">→</span>
+      </button>
+      <p class="privacy-note">Je naam wordt niet gevraagd. Per browser kan één stem per wedstrijd worden opgeslagen.</p>
+    </form>
+
+    <section id="success-card" class="success-card hidden" aria-live="polite">
+      <div class="success-icon" aria-hidden="true">✓</div>
+      <h2>Stem binnen</h2>
+      <p id="success-message">Je keuzes zijn opgeslagen. De uitslag blijft geheim tot na het stemmen.</p>
+    </section>
+
+    <footer>
+      <p>AthenA H2-O · seizoen 2026/27</p>
+    </footer>
+  </main>
+
+  <iframe id="post-target" name="post-target" title="Stemverwerking" class="hidden-frame"></iframe>
+  <form id="post-form" method="post" target="post-target" class="hidden">
+    <input id="post-payload" type="hidden" name="payload" />
+  </form>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
