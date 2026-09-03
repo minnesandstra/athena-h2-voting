@@ -8,16 +8,15 @@
   const els = {
     matchTitle: document.getElementById("match-title"),
     matchMeta: document.getElementById("match-meta"),
-    roundExplainer: document.getElementById("round-explainer"),
+    phaseExplainer: document.getElementById("phase-explainer"),
     statusPill: document.getElementById("status-pill"),
     message: document.getElementById("message"),
     form: document.getElementById("vote-form"),
-    motm: document.getElementById("motm-options"),
-    dotd: document.getElementById("dotd-options"),
-    sexy: document.getElementById("sexy-options"),
-    motmHelp: document.getElementById("motm-help"),
-    dotdHelp: document.getElementById("dotd-help"),
-    sexyHelp: document.getElementById("sexy-help"),
+    awardEmoji: document.getElementById("award-emoji"),
+    phaseStep: document.getElementById("phase-step"),
+    awardTitle: document.getElementById("award-title"),
+    awardHelp: document.getElementById("award-help"),
+    awardOptions: document.getElementById("award-options"),
     voterCodeWrap: document.getElementById("voter-code-wrap"),
     voterCode: document.getElementById("voter-code"),
     submit: document.getElementById("submit-button"),
@@ -29,11 +28,21 @@
 
   let state = {
     match: null,
-    players: [],
+    phase: 1,
+    category: "dotd",
     round: 1,
-    nominees: { motm: [], dotd: [], sexy: [] },
+    choices: [],
+    votesInPhase: 0,
+    votersPerPhase: 16,
     requireVoterCode: false,
-    demo: !API_CONFIGURED
+    demo: !API_CONFIGURED,
+    submitting: false
+  };
+
+  const CATEGORY_META = {
+    dotd: { title: "Dick of the Day", emoji: "💩" },
+    sexy: { title: "Sexy Moment", emoji: "🔥" },
+    motm: { title: "Man of the Match", emoji: "🏆" }
   };
 
   function randomId(prefix = "id") {
@@ -52,40 +61,16 @@
     return id;
   }
 
-  function localVoteKey(matchId, round) {
-    return `athena_h2_voted_${matchId}_round_${round}`;
+  function localVoteKey(matchId, phase) {
+    return `athena_h2_voted_${matchId}_phase_${phase}`;
   }
 
-  function hasLocalVote(matchId, round) {
-    return localStorage.getItem(localVoteKey(matchId, round)) === "1";
+  function hasLocalVote(matchId, phase) {
+    return localStorage.getItem(localVoteKey(matchId, phase)) === "1";
   }
 
-  function markLocalVote(matchId, round) {
-    localStorage.setItem(localVoteKey(matchId, round), "1");
-  }
-
-  function demoConfig() {
-    const players = [
-      "Adriaan Davids","Brent van den Bongaardt","Caspar de Jong","Connor Busker","Jaap van der Mark","Jasper Batstra","Jort Bakker","Minne Sandstra","Oscar NZ","Otto Drabbe","Pelle Bruinsma","Sebastian Buddle","Seger Janssen","Skip Bakker","Tom Vos","Twan van den Berg"
-    ];
-    return {
-      ok: true,
-      demo: true,
-      requireVoterCode: false,
-      round: 1,
-      nominees: { motm: [], dotd: [], sexy: [] },
-      match: {
-        matchId: "2026-09-06-ushc-home",
-        date: "2026-09-06",
-        startTime: "10:45",
-        home: "AthenA H2-O",
-        away: "USHC H2-O",
-        venue: "Stadion de Meer",
-        status: "open",
-        statusLabel: "Demo geopend"
-      },
-      players
-    };
+  function markLocalVote(matchId, phase) {
+    localStorage.setItem(localVoteKey(matchId, phase), "1");
   }
 
   function jsonp(params, timeoutMs = 8000) {
@@ -123,19 +108,19 @@
       .replaceAll("'", "&#039;");
   }
 
-  function renderOptions(container, name, items) {
-    container.innerHTML = "";
+  function renderOptions(items) {
+    els.awardOptions.innerHTML = "";
     items.forEach((item, index) => {
       const wrapper = document.createElement("div");
       wrapper.className = "option";
-      const id = `${name}-${index}`;
-      wrapper.innerHTML = `<input type="radio" id="${id}" name="${name}" value="${escapeHtml(item)}" /><label for="${id}">${escapeHtml(item)}</label>`;
-      container.appendChild(wrapper);
+      const id = `award-${index}`;
+      wrapper.innerHTML = `<input type="radio" id="${id}" name="award" value="${escapeHtml(item)}" /><label for="${id}">${escapeHtml(item)}</label>`;
+      els.awardOptions.appendChild(wrapper);
     });
   }
 
-  function selected(name) {
-    return document.querySelector(`input[name="${name}"]:checked`)?.value || "";
+  function selected() {
+    return document.querySelector('input[name="award"]:checked')?.value || "";
   }
 
   function showMessage(text) {
@@ -155,21 +140,11 @@
     clearMessage();
   }
 
-  function currentChoices() {
-    if (state.round === 2) {
-      return {
-        motm: state.nominees.motm,
-        dotd: state.nominees.dotd,
-        sexy: state.nominees.sexy
-      };
-    }
-    return { motm: state.players, dotd: state.players, sexy: state.players };
-  }
-
   function validateReady() {
+    if (state.submitting) return false;
     if (!state.match || state.match.status !== "open") return false;
-    if (hasLocalVote(state.match.matchId, state.round) && !state.demo) return false;
-    if (!selected("motm") || !selected("dotd") || !selected("sexy")) return false;
+    if (hasLocalVote(state.match.matchId, state.phase) && !state.demo) return false;
+    if (!selected()) return false;
     if (state.requireVoterCode && !els.voterCode.value.trim()) return false;
     return true;
   }
@@ -178,20 +153,18 @@
     els.submit.disabled = !validateReady();
   }
 
-  function renderStatus() {
-    const status = state.match.status || "scheduled";
-    els.statusPill.className = `pill ${status === "open" ? "open" : status === "closed" ? "closed" : ""}`;
-    els.statusPill.textContent = status === "open" ? `Ronde ${state.round} open` : (state.match.statusLabel || "Nog gesloten");
-  }
-
   function render(data) {
     state = {
       match: data.match,
-      players: Array.isArray(data.players) ? data.players : [],
+      phase: Number(data.phase || 1),
+      category: data.category || "dotd",
       round: Number(data.round || 1),
-      nominees: data.nominees || { motm: [], dotd: [], sexy: [] },
+      choices: Array.isArray(data.choices) ? data.choices : [],
+      votesInPhase: Number(data.votesInPhase || 0),
+      votersPerPhase: Number(data.votersPerPhase || 16),
       requireVoterCode: Boolean(data.requireVoterCode),
-      demo: Boolean(data.demo)
+      demo: Boolean(data.demo),
+      submitting: false
     };
 
     if (!state.match) return showMessage("Geen wedstrijd gevonden.");
@@ -199,29 +172,25 @@
     els.matchTitle.textContent = `${state.match.home} – ${state.match.away}`;
     const timeText = state.match.startTime && state.match.startTime !== "00:00" ? ` · ${state.match.startTime}` : " · tijd volgt";
     els.matchMeta.textContent = `${formatDate(state.match.date)}${timeText}${state.match.venue ? ` · ${state.match.venue}` : ""}`;
-    els.roundExplainer.textContent = state.round === 1
-      ? "Ronde 1: iedereen kiest uit alle spelers. Na 16 unieke stemmen gaan per categorie de top 3 door."
-      : "Finaleronde: stem alleen op de drie genomineerden per categorie. Alleen deze ronde bepaalt de officiële uitslag.";
 
-    els.motmHelp.textContent = state.round === 1 ? "Wie verdient een nominatie?" : "Wie wint Man of the Match?";
-    els.dotdHelp.textContent = state.round === 1 ? "Wie verdient een nominatie?" : "Wie wint Dick of the Day?";
-    els.sexyHelp.textContent = state.round === 1 ? "Welke speler verdient een nominatie voor Sexy Moment?" : "Welke speler wint Sexy Moment?";
+    const meta = CATEGORY_META[state.category] || CATEGORY_META.dotd;
+    els.awardEmoji.textContent = meta.emoji;
+    els.awardTitle.textContent = meta.title;
+    els.phaseStep.textContent = `FASE ${state.phase} VAN 6`;
+    els.awardHelp.textContent = state.round === 1
+      ? "Kies één speler. De top 3 gaat door naar de finale."
+      : "Kies de winnaar uit de drie genomineerden.";
+    els.phaseExplainer.textContent = `${meta.title} · ronde ${state.round} · ${state.votesInPhase}/${state.votersPerPhase} stemmen binnen`;
+    els.statusPill.className = `pill ${state.match.status === "open" ? "open" : state.match.status === "closed" ? "closed" : ""}`;
+    els.statusPill.textContent = state.match.status === "open" ? `Fase ${state.phase} open` : (state.match.statusLabel || "Gesloten");
 
-    const choices = currentChoices();
-    renderOptions(els.motm, "motm", choices.motm);
-    renderOptions(els.dotd, "dotd", choices.dotd);
-    renderOptions(els.sexy, "sexy", choices.sexy);
-    renderStatus();
+    renderOptions(state.choices);
     els.voterCodeWrap.classList.toggle("hidden", !state.requireVoterCode);
 
-    if (state.demo) {
-      showMessage("Demo-modus: stemmen worden niet opgeslagen.");
-    } else if (hasLocalVote(state.match.matchId, state.round)) {
-      showSuccess(state.round === 1
-        ? "Je voorronde-stem is binnen. Zodra iedereen heeft gestemd, verschijnt hier automatisch de finaleronde."
-        : "Je finalestem is binnen.");
-    } else if (state.match.status !== "open") {
+    if (state.match.status !== "open") {
       showMessage(state.match.status === "closed" ? "De stemming is gesloten." : "De stemming is nog niet geopend.");
+    } else if (hasLocalVote(state.match.matchId, state.phase) && !state.demo) {
+      showSuccess(`Je hebt al gestemd in fase ${state.phase}. Deze fase staat op ${state.votesInPhase}/${state.votersPerPhase}.`);
     } else {
       clearMessage();
     }
@@ -241,25 +210,29 @@
   async function handleSubmit(event) {
     event.preventDefault();
     clearMessage();
-    if (!validateReady()) return showMessage("Kies eerst bij alle drie de categorieën een speler.");
+    if (!validateReady()) return;
 
-    if (state.demo) return showSuccess("Demo-stem ontvangen.");
+    state.submitting = true;
+    els.submit.disabled = true;
+    els.submit.querySelector("span:first-child").textContent = "Versturen…";
+    Array.from(els.form.elements).forEach(el => { if (el !== els.submit) el.disabled = true; });
 
-    const submissionId = randomId(`round${state.round}`);
+    if (state.demo) {
+      markLocalVote(state.match.matchId, state.phase);
+      showSuccess("Demo-stem ontvangen.");
+      return;
+    }
+
+    const submissionId = randomId(`phase${state.phase}`);
     const payload = {
       submissionId,
       matchId: state.match.matchId,
-      round: state.round,
+      phase: state.phase,
       browserId: browserId(),
       voterCode: els.voterCode.value.trim().toUpperCase(),
-      motm: selected("motm"),
-      dotd: selected("dotd"),
-      sexyPlayer: selected("sexy"),
+      player: selected(),
       clientTimestamp: new Date().toISOString()
     };
-
-    els.submit.disabled = true;
-    els.submit.querySelector("span:first-child").textContent = "Versturen…";
 
     try {
       els.postForm.action = API_URL;
@@ -267,11 +240,13 @@
       els.postForm.submit();
       const receipt = await pollReceipt(submissionId);
       if (!receipt.ok) throw new Error(receipt.message || "Stem kon niet worden opgeslagen.");
-      markLocalVote(state.match.matchId, state.round);
+      markLocalVote(state.match.matchId, state.phase);
       showSuccess(receipt.message || "Je stem is opgeslagen.");
     } catch (err) {
-      showMessage(err.message || "Er ging iets mis bij het versturen.");
+      state.submitting = false;
+      Array.from(els.form.elements).forEach(el => { if (el !== els.submit) el.disabled = false; });
       els.submit.querySelector("span:first-child").textContent = "Stem versturen";
+      showMessage(err.message || "Er ging iets mis bij het versturen.");
       updateButton();
     }
   }
@@ -280,15 +255,16 @@
     els.form.addEventListener("submit", handleSubmit);
     els.form.addEventListener("change", updateButton);
     els.form.addEventListener("input", updateButton);
+
     try {
-      if (!API_CONFIGURED) return render(demoConfig());
+      if (!API_CONFIGURED) throw new Error("Apps Script is niet geconfigureerd.");
       const matchId = new URLSearchParams(location.search).get("match") || "";
       const data = await jsonp({ action: "config", matchId });
       if (!data?.ok) throw new Error(data?.message || "Configuratie kon niet worden geladen.");
       render(data);
     } catch (err) {
-      showMessage(`${err.message} De site schakelt over naar demo-modus.`);
-      render(demoConfig());
+      showMessage(err.message || "De site kon de backend niet laden.");
+      els.submit.disabled = true;
     }
   }
 
