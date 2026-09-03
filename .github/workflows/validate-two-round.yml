@@ -1,0 +1,22 @@
+name: Validate two-round voting
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/validate-two-round.yml'
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check frontend JavaScript
+        run: node --check app.js
+      - name: Check Apps Script JavaScript syntax
+        run: cp apps-script/Code.gs /tmp/Code.js && node --check /tmp/Code.js
+      - name: Check required two-round markers
+        run: |
+          grep -q "VOTERS_PER_ROUND: 16" apps-script/Code.gs
+          grep -q "Round1Votes" apps-script/Code.gs
+          grep -q "Nominations" apps-script/Code.gs
+          grep -q "sexyPlayer" app.js
