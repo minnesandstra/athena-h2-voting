@@ -1,5 +1,3 @@
-// Na het deployen van Google Apps Script vervang je onderstaande waarde.
-// Voorbeeld: https://script.google.com/macros/s/AKfycb.../exec
 window.APP_CONFIG = {
-  API_URL: "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"
+  API_URL: "https://script.google.com/macros/s/AKfycbwzbdhRwuh5mukkisno3m90AUyxcHqA3yw9PKOh7HheZKKGYdMHuR2iRA9pVFu1utXK/exec"
 };
