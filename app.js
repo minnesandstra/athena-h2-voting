@@ -32,8 +32,9 @@
     category: "dotd",
     round: 1,
     choices: [],
-    votesInPhase: 0,
-    votersPerPhase: 16,
+    voteCount: 0,
+    ready: true,
+    readyMessage: "",
     requireVoterCode: false,
     demo: !API_CONFIGURED,
     submitting: false
@@ -141,7 +142,7 @@
   }
 
   function validateReady() {
-    if (state.submitting) return false;
+    if (state.submitting || !state.ready) return false;
     if (!state.match || state.match.status !== "open") return false;
     if (hasLocalVote(state.match.matchId, state.phase) && !state.demo) return false;
     if (!selected()) return false;
@@ -160,8 +161,9 @@
       category: data.category || "dotd",
       round: Number(data.round || 1),
       choices: Array.isArray(data.choices) ? data.choices : [],
-      votesInPhase: Number(data.votesInPhase || 0),
-      votersPerPhase: Number(data.votersPerPhase || 16),
+      voteCount: Number(data.voteCount || 0),
+      ready: data.ready !== false,
+      readyMessage: String(data.readyMessage || ""),
       requireVoterCode: Boolean(data.requireVoterCode),
       demo: Boolean(data.demo),
       submitting: false
@@ -178,9 +180,9 @@
     els.awardTitle.textContent = meta.title;
     els.phaseStep.textContent = `FASE ${state.phase} VAN 6`;
     els.awardHelp.textContent = state.round === 1
-      ? "Kies één speler. De top 3 gaat door naar de finale."
+      ? "Kies één speler. De eigenaar bepaalt wanneer de top 3 naar de finale gaat."
       : "Kies de winnaar uit de drie genomineerden.";
-    els.phaseExplainer.textContent = `${meta.title} · ronde ${state.round} · ${state.votesInPhase}/${state.votersPerPhase} stemmen binnen`;
+    els.phaseExplainer.textContent = `${meta.title} · ronde ${state.round} · ${state.voteCount} stem${state.voteCount === 1 ? "" : "men"} binnen`;
     els.statusPill.className = `pill ${state.match.status === "open" ? "open" : state.match.status === "closed" ? "closed" : ""}`;
     els.statusPill.textContent = state.match.status === "open" ? `Fase ${state.phase} open` : (state.match.statusLabel || "Gesloten");
 
@@ -189,8 +191,10 @@
 
     if (state.match.status !== "open") {
       showMessage(state.match.status === "closed" ? "De stemming is gesloten." : "De stemming is nog niet geopend.");
+    } else if (!state.ready) {
+      showMessage(state.readyMessage || "Deze fase kan nog niet starten.");
     } else if (hasLocalVote(state.match.matchId, state.phase) && !state.demo) {
-      showSuccess(`Je hebt al gestemd in fase ${state.phase}. Deze fase staat op ${state.votesInPhase}/${state.votersPerPhase}.`);
+      showSuccess(`Je hebt al gestemd in fase ${state.phase}. Er zijn nu ${state.voteCount} stemmen binnen. De eigenaar bepaalt wanneer fase ${Math.min(6, state.phase + 1)} opent.`);
     } else {
       clearMessage();
     }
@@ -217,12 +221,7 @@
     els.submit.querySelector("span:first-child").textContent = "Versturen…";
     Array.from(els.form.elements).forEach(el => { if (el !== els.submit) el.disabled = true; });
 
-    if (state.demo) {
-      markLocalVote(state.match.matchId, state.phase);
-      showSuccess("Demo-stem ontvangen.");
-      return;
-    }
-
+    const chosenPlayer = selected();
     const submissionId = randomId(`phase${state.phase}`);
     const payload = {
       submissionId,
@@ -230,7 +229,7 @@
       phase: state.phase,
       browserId: browserId(),
       voterCode: els.voterCode.value.trim().toUpperCase(),
-      player: selected(),
+      player: chosenPlayer,
       clientTimestamp: new Date().toISOString()
     };
 
