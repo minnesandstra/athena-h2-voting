@@ -18,7 +18,7 @@
       <div>
         <p class="eyebrow">ATHENA H2-O</p>
         <h1>Match Awards</h1>
-        <p class="intro">Twee rondes. Drie prijzen. Eén definitieve uitslag.</p>
+        <p class="intro">Eerst Dick of the Day, dan Sexy Moment, daarna Man of the Match.</p>
       </div>
     </header>
 
@@ -27,7 +27,7 @@
         <p class="eyebrow">DEZE WEDSTRIJD</p>
         <h2 id="match-title">Wedstrijd laden…</h2>
         <p id="match-meta" class="muted"></p>
-        <p id="round-explainer" class="muted"></p>
+        <p id="phase-explainer" class="muted"></p>
       </div>
       <span id="status-pill" class="pill">Laden…</span>
     </section>
@@ -37,45 +37,20 @@
     <form id="vote-form" class="vote-form" novalidate>
       <section class="award-card">
         <div class="award-heading">
-          <span class="emoji" aria-hidden="true">🏆</span>
+          <span id="award-emoji" class="emoji" aria-hidden="true">💩</span>
           <div>
-            <p class="step">01</p>
-            <h2>Man of the Match</h2>
-            <p id="motm-help">Wie was vandaag de beste?</p>
+            <p id="phase-step" class="step">FASE 1 VAN 6</p>
+            <h2 id="award-title">Dick of the Day</h2>
+            <p id="award-help">Wie verdient een plek in de finale?</p>
           </div>
         </div>
-        <div id="motm-options" class="option-grid" role="radiogroup" aria-label="Man of the Match"></div>
-      </section>
-
-      <section class="award-card">
-        <div class="award-heading">
-          <span class="emoji" aria-hidden="true">💩</span>
-          <div>
-            <p class="step">02</p>
-            <h2>Dick of the Day</h2>
-            <p id="dotd-help">Wie verdient 'm vandaag?</p>
-          </div>
-        </div>
-        <div id="dotd-options" class="option-grid" role="radiogroup" aria-label="Dick of the Day"></div>
-      </section>
-
-      <section class="award-card">
-        <div class="award-heading">
-          <span class="emoji" aria-hidden="true">🔥</span>
-          <div>
-            <p class="step">03</p>
-            <h2>Sexy Moment</h2>
-            <p id="sexy-help">Welke speler had het meest sexy moment?</p>
-          </div>
-        </div>
-        <div id="sexy-options" class="option-grid" role="radiogroup" aria-label="Sexy Moment"></div>
+        <div id="award-options" class="option-grid" role="radiogroup" aria-label="Spelerkeuze"></div>
       </section>
 
       <section id="voter-code-wrap" class="award-card compact hidden">
         <div class="field">
           <label for="voter-code">Stemcode</label>
           <input id="voter-code" type="text" autocomplete="one-time-code" maxlength="16" placeholder="Bijv. K7M2Q9" />
-          <p class="hint">Iedere code kan één keer per stemronde worden gebruikt.</p>
         </div>
       </section>
 
@@ -83,18 +58,16 @@
         <span>Stem versturen</span>
         <span aria-hidden="true">→</span>
       </button>
-      <p class="privacy-note">Per browser kan één keer per ronde worden gestemd.</p>
+      <p class="privacy-note">Per browser kan één keer per fase worden gestemd.</p>
     </form>
 
     <section id="success-card" class="success-card hidden" aria-live="polite">
       <div class="success-icon" aria-hidden="true">✓</div>
       <h2>Stem binnen</h2>
-      <p id="success-message">Je keuzes zijn opgeslagen.</p>
+      <p id="success-message">Je stem is opgeslagen.</p>
     </section>
 
-    <footer>
-      <p>AthenA H2-O · seizoen 2026/27</p>
-    </footer>
+    <footer><p>AthenA H2-O · seizoen 2026/27</p></footer>
   </main>
 
   <iframe id="post-target" name="post-target" title="Stemverwerking" class="hidden-frame"></iframe>
