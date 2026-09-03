@@ -155,6 +155,14 @@
   }
 
   function render(data) {
+    const isNewBackend = Object.prototype.hasOwnProperty.call(data, "phase") && Array.isArray(data.choices);
+    if (!isNewBackend) {
+      els.submit.disabled = true;
+      renderOptions([]);
+      showMessage("De website is al bijgewerkt, maar Apps Script draait nog een oudere versie. Deploy in Apps Script de nieuwste Code.gs als 'Nieuwe versie'. Daarna verschijnen de namen weer.");
+      return;
+    }
+
     state = {
       match: data.match,
       phase: Number(data.phase || 1),
@@ -182,19 +190,19 @@
     els.awardHelp.textContent = state.round === 1
       ? "Kies één speler. De eigenaar bepaalt wanneer de top 3 naar de finale gaat."
       : "Kies de winnaar uit de drie genomineerden.";
-    els.phaseExplainer.textContent = `${meta.title} · ronde ${state.round} · ${state.voteCount} stem${state.voteCount === 1 ? "" : "men"} binnen`;
+    els.phaseExplainer.textContent = `${meta.title} · ronde ${state.round} · ${state.voteCount} stemmen binnen`;
     els.statusPill.className = `pill ${state.match.status === "open" ? "open" : state.match.status === "closed" ? "closed" : ""}`;
     els.statusPill.textContent = state.match.status === "open" ? `Fase ${state.phase} open` : (state.match.statusLabel || "Gesloten");
 
     renderOptions(state.choices);
     els.voterCodeWrap.classList.toggle("hidden", !state.requireVoterCode);
 
-    if (state.match.status !== "open") {
-      showMessage(state.match.status === "closed" ? "De stemming is gesloten." : "De stemming is nog niet geopend.");
-    } else if (!state.ready) {
+    if (!state.ready) {
       showMessage(state.readyMessage || "Deze fase kan nog niet starten.");
+    } else if (state.match.status !== "open") {
+      showMessage(state.match.status === "closed" ? "De stemming is gesloten." : "De stemming is nog niet geopend.");
     } else if (hasLocalVote(state.match.matchId, state.phase) && !state.demo) {
-      showSuccess(`Je hebt al gestemd in fase ${state.phase}. Er zijn nu ${state.voteCount} stemmen binnen. De eigenaar bepaalt wanneer fase ${Math.min(6, state.phase + 1)} opent.`);
+      showSuccess(`Je hebt al gestemd in fase ${state.phase}. Er zijn nu ${state.voteCount} stemmen binnen.`);
     } else {
       clearMessage();
     }
@@ -216,12 +224,18 @@
     clearMessage();
     if (!validateReady()) return;
 
+    const chosenPlayer = selected();
     state.submitting = true;
     els.submit.disabled = true;
     els.submit.querySelector("span:first-child").textContent = "Versturen…";
     Array.from(els.form.elements).forEach(el => { if (el !== els.submit) el.disabled = true; });
 
-    const chosenPlayer = selected();
+    if (state.demo) {
+      markLocalVote(state.match.matchId, state.phase);
+      showSuccess("Demo-stem ontvangen.");
+      return;
+    }
+
     const submissionId = randomId(`phase${state.phase}`);
     const payload = {
       submissionId,
