@@ -42,7 +42,7 @@
     motmWinnerVotes: document.getElementById("motm-winner-votes")
   };
 
-  let state = { match:null, phase:1, category:"dotd", round:1, choices:[], choiceStats:[], voteCount:0, ready:true, readyMessage:"", requireVoterCode:false, submitting:false, waiting:false };
+  let state = { match:null, phase:1, voteEpoch:1, category:"dotd", round:1, choices:[], choiceStats:[], voteCount:0, ready:true, readyMessage:"", requireVoterCode:false, submitting:false, waiting:false };
   let pollTimer = null;
   let pollBusy = false;
   const loadedScripts = new Map();
@@ -66,9 +66,9 @@
     return id;
   }
 
-  function localVoteKey(matchId, phase) { return `athena_h2_v2_voted_${matchId}_phase_${phase}`; }
-  function hasLocalVote(matchId, phase) { return localStorage.getItem(localVoteKey(matchId, phase)) === "1"; }
-  function markLocalVote(matchId, phase) { localStorage.setItem(localVoteKey(matchId, phase), "1"); }
+  function localVoteKey(matchId, phase, epoch = 1) { return `athena_h2_v3_voted_${matchId}_epoch_${epoch}_phase_${phase}`; }
+  function hasLocalVote(matchId, phase, epoch = 1) { return localStorage.getItem(localVoteKey(matchId, phase, epoch)) === "1"; }
+  function markLocalVote(matchId, phase, epoch = 1) { localStorage.setItem(localVoteKey(matchId, phase, epoch), "1"); }
 
   async function apiGet(params = {}, timeoutMs = 7000) {
     const url = new URL(API_URL);
@@ -171,7 +171,7 @@
   function showForm() { els.form.classList.remove("hidden"); els.success.classList.add("hidden"); }
   function setSubmitText(text) { const span=els.submit.querySelector("span:first-child"); if(span) span.textContent=text; }
   function setFormDisabled(disabled) { Array.from(els.form.elements).forEach(el=>{ if(el!==els.submit) el.disabled=disabled; }); if(disabled) els.submit.disabled=true; }
-  function validateReady() { return !(state.submitting||state.waiting||!state.ready||!state.match||state.match.status!=="open"||hasLocalVote(state.match.matchId,state.phase)||!selected()); }
+  function validateReady() { return !(state.submitting||state.waiting||!state.ready||!state.match||state.match.status!=="open"||hasLocalVote(state.match.matchId,state.phase,state.voteEpoch)||!selected()); }
   function updateButton() { els.submit.disabled = !validateReady(); }
 
   function renderMatch(match) {
@@ -227,7 +227,7 @@
   }
 
   function renderActive(data) {
-    state={match:data.match,phase:Number(data.phase||1),category:data.category||"dotd",round:Number(data.round||1),choices:Array.isArray(data.choices)?data.choices:[],choiceStats:Array.isArray(data.choiceStats)?data.choiceStats:[],voteCount:Number(data.voteCount||0),ready:data.ready!==false,readyMessage:String(data.readyMessage||""),requireVoterCode:false,submitting:false,waiting:false};
+    state={match:data.match,phase:Number(data.phase||1),voteEpoch:Number(data.voteEpoch||1),category:data.category||"dotd",round:Number(data.round||1),choices:Array.isArray(data.choices)?data.choices:[],choiceStats:Array.isArray(data.choiceStats)?data.choiceStats:[],voteCount:Number(data.voteCount||0),ready:data.ready!==false,readyMessage:String(data.readyMessage||""),requireVoterCode:false,submitting:false,waiting:false};
     hideCeremonies(); showForm(); setFormDisabled(false); setSubmitText("Stem versturen"); renderHeader(state,false);
     const meta=CATEGORY_META[state.category]||CATEGORY_META.dotd; const finalLive=state.round===2;
     els.phaseExplainer.textContent=finalLive?`${meta.title} · finale · ${state.voteCount} stemmen · live stand`:`${meta.title} · nominaties · ${state.voteCount} stemmen binnen`;
@@ -240,7 +240,7 @@
   function renderWaiting(data) {
     const preview=data.nextPhasePreview;
     if(!preview){ hideCeremonies(); showSuccess("Je stem in fase 6 is opgeslagen. Wacht tot de admin de uitreiking start."); schedulePoll(WAITING_POLL_MS); return; }
-    state={match:data.match,phase:Number(preview.phase),category:preview.category||"dotd",round:Number(preview.round||1),choices:Array.isArray(preview.choices)?preview.choices:[],choiceStats:Array.isArray(preview.choiceStats)?preview.choiceStats:[],voteCount:Number(preview.voteCount||0),ready:false,readyMessage:String(preview.readyMessage||""),requireVoterCode:false,submitting:false,waiting:true};
+    state={match:data.match,phase:Number(preview.phase),voteEpoch:Number(data.voteEpoch||1),category:preview.category||"dotd",round:Number(preview.round||1),choices:Array.isArray(preview.choices)?preview.choices:[],choiceStats:Array.isArray(preview.choiceStats)?preview.choiceStats:[],voteCount:Number(preview.voteCount||0),ready:false,readyMessage:String(preview.readyMessage||""),requireVoterCode:false,submitting:false,waiting:true};
     hideCeremonies(); showForm(); renderHeader(state,true); setSubmitText(`Wachten op fase ${state.phase}`);
     const meta=CATEGORY_META[state.category]||CATEGORY_META.dotd; const finalPreview=state.round===2;
     els.phaseExplainer.textContent=finalPreview?`${meta.title} · voorlopige top 3 · ${state.voteCount} nominatiestemmen · live`:`${meta.title} · fase ${state.phase} staat klaar`;
@@ -253,8 +253,8 @@
     if(!data?.ok||!data.match||!Object.prototype.hasOwnProperty.call(data,"phase")||!Array.isArray(data.choices)){ els.submit.disabled=true; showMessage(data?.message||"De site kon de stemgegevens niet laden."); return; }
     renderMatch(data.match);
     if(await renderFinalCeremonies(data)){ schedulePoll(15000); return; }
-    const matchId=data.match.matchId, serverPhase=Number(data.phase||1);
-    if(hasLocalVote(matchId,serverPhase)) renderWaiting(data); else renderActive(data);
+    const matchId=data.match.matchId, serverPhase=Number(data.phase||1), voteEpoch=Number(data.voteEpoch||1);
+    if(hasLocalVote(matchId,serverPhase,voteEpoch)) renderWaiting(data); else renderActive(data);
   }
 
   async function loadConfig() {
@@ -267,12 +267,12 @@
 
   async function handleSubmit(event) {
     event.preventDefault(); clearMessage(); if(!validateReady()) return;
-    const chosenPlayer=selected(), submittedPhase=state.phase, matchId=state.match.matchId;
+    const chosenPlayer=selected(), submittedPhase=state.phase, matchId=state.match.matchId, voteEpoch=state.voteEpoch;
     state.submitting=true; els.submit.disabled=true; setSubmitText("Versturen…"); setFormDisabled(true);
     const submissionId=randomId(`phase${submittedPhase}`);
     try {
       const result=await apiPost({action:"vote",submissionId,matchId,phase:submittedPhase,browserId:browserId(),player:chosenPlayer,clientTimestamp:new Date().toISOString()});
-      markLocalVote(matchId,submittedPhase); state.submitting=false; showSuccess(result.message||"Je stem is opgeslagen."); await loadConfig();
+      markLocalVote(matchId,submittedPhase,voteEpoch); state.submitting=false; showSuccess(result.message||"Je stem is opgeslagen."); await loadConfig();
     } catch(err) {
       state.submitting=false; setFormDisabled(false); setSubmitText("Stem versturen"); showMessage(err.message||"Er ging iets mis bij het versturen."); updateButton();
     }
