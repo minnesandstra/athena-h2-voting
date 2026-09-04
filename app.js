@@ -7,9 +7,10 @@
   const API_CONFIGURED = /^https:\/\/[^/]+\.supabase\.co\/functions\/v1\//.test(API_URL);
   const ACTIVE_POLL_MS = 5000;
   const WAITING_POLL_MS = 2500;
+  const STORAGE_BASE = "https://ieejqqqqxghauyjgmfnf.supabase.co/storage/v1/object/public/ceremony-assets";
   const CEREMONY_ASSETS = {
-    sexy: "sexy-moment.gif?v=3",
-    motm: "man-of-the-match-poster.png?v=3"
+    sexy: `${STORAGE_BASE}/antonyspin.gif?v=4`,
+    motm: `${STORAGE_BASE}/ChatGPT%20Image%204%20sep%202026%2C%2010_36_02.png?v=4`
   };
 
   const els = {
