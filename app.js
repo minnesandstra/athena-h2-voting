@@ -7,6 +7,10 @@
   const API_CONFIGURED = /^https:\/\/[^/]+\.supabase\.co\/functions\/v1\//.test(API_URL);
   const ACTIVE_POLL_MS = 5000;
   const WAITING_POLL_MS = 2500;
+  const CEREMONY_ASSETS = {
+    sexy: "sexy-moment.gif?v=3",
+    motm: "man-of-the-match-poster.png?v=3"
+  };
 
   const els = {
     matchTitle: document.getElementById("match-title"),
@@ -106,6 +110,33 @@
     return promise;
   }
 
+  function setImageAsset(img, src, fallbackScript, fallbackGetter) {
+    if (!img) return;
+    img.onerror = async () => {
+      img.onerror = null;
+      try {
+        await loadScriptOnce(fallbackScript);
+        const fallback = fallbackGetter();
+        if (fallback) img.src = fallback;
+      } catch (_) {}
+    };
+    img.src = src;
+  }
+
+  function setBackgroundAsset(el, src, fallbackScript, fallbackGetter) {
+    if (!el) return;
+    const probe = new Image();
+    probe.onload = () => { el.style.backgroundImage = `url("${src}")`; };
+    probe.onerror = async () => {
+      try {
+        await loadScriptOnce(fallbackScript);
+        const fallback = fallbackGetter();
+        if (fallback) el.style.backgroundImage = `url("${fallback}")`;
+      } catch (_) {}
+    };
+    probe.src = src;
+  }
+
   function formatDate(dateString) {
     if (!dateString) return "";
     const d = new Date(`${dateString}T12:00:00`);
@@ -168,14 +199,29 @@
     els.sexyWinnerVotes.textContent=`${Number(sexy.votes||0)} finalestem${Number(sexy.votes||0)===1?"":"men"}`;
     els.motmWinnerName.textContent=motm.winner||"Nog geen winnaar";
     els.motmWinnerVotes.textContent=`met ${Number(motm.votes||0)} stem${Number(motm.votes||0)===1?"":"men"}`;
+    els.motmPosterArt.setAttribute("aria-label", `Man of the Match: ${motm.winner||"onbekend"}`);
     els.finalCeremonies.classList.remove("hidden");
     els.phaseExplainer.textContent="Fase 7 · stemming gesloten · uitreiking";
     els.statusPill.className="pill closed"; els.statusPill.textContent="Uitreiking";
-    Promise.allSettled([loadScriptOnce("dotd-image-data.js"),loadScriptOnce("sexy-moment-data.js"),loadScriptOnce("motm-poster-data.js")]).then(()=>{
+
+    loadScriptOnce("dotd-image-data.js").then(()=>{
       if(window.DOTD_IMAGE_DATA) els.dotdVisual.src=window.DOTD_IMAGE_DATA;
-      if(window.SEXY_MOMENT_DATA) els.sexyVisual.src=window.SEXY_MOMENT_DATA;
-      if(window.MOTM_POSTER_DATA) els.motmPosterArt.style.backgroundImage=`url("${window.MOTM_POSTER_DATA}")`;
-    });
+    }).catch(()=>{});
+
+    setImageAsset(
+      els.sexyVisual,
+      CEREMONY_ASSETS.sexy,
+      "sexy-moment-data.js",
+      () => window.SEXY_MOMENT_DATA
+    );
+
+    setBackgroundAsset(
+      els.motmPosterArt,
+      CEREMONY_ASSETS.motm,
+      "motm-poster-data.js",
+      () => window.MOTM_POSTER_DATA
+    );
+
     return true;
   }
 
