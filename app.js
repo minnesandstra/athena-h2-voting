@@ -28,6 +28,10 @@
     dotdCeremony: document.getElementById("dotd-ceremony"),
     dotdWinnerName: document.getElementById("dotd-winner-name"),
     dotdWinnerVotes: document.getElementById("dotd-winner-votes"),
+    sexyCeremony: document.getElementById("sexy-ceremony"),
+    sexyWinnerName: document.getElementById("sexy-winner-name"),
+    sexyWinnerVotes: document.getElementById("sexy-winner-votes"),
+    sexyVisual: document.getElementById("sexy-visual"),
     motmCeremony: document.getElementById("motm-ceremony"),
     motmPosterArt: document.getElementById("motm-poster-art"),
     motmWinnerName: document.getElementById("motm-winner-name"),
@@ -51,6 +55,7 @@
   };
   let pollBusy = false;
   let motmRevealed = false;
+  let sexyRevealed = false;
 
   const CATEGORY_META = {
     dotd: { title: "Dick of the Day", emoji: "💩" },
@@ -228,6 +233,29 @@
     els.dotdCeremony.classList.remove("hidden");
   }
 
+  function renderSexyCeremony(data) {
+    if (!els.sexyCeremony) return;
+    const award = data?.awards?.sexy;
+    const shouldShow = Number(data?.phase || 0) >= 5 && award?.winner && data?.match?.status !== "closed";
+    if (!shouldShow) {
+      els.sexyCeremony.classList.add("hidden");
+      sexyRevealed = false;
+      return;
+    }
+    const votes = Number(award.votes || 0);
+    els.sexyWinnerName.textContent = award.winner;
+    els.sexyWinnerVotes.textContent = `${votes} finalestem${votes === 1 ? "" : "men"}`;
+    if (window.SEXY_MOMENT_DATA && !els.sexyVisual.src) els.sexyVisual.src = window.SEXY_MOMENT_DATA;
+    els.sexyVisual.alt = `Sexy Moment: ${award.winner}`;
+    els.sexyCeremony.classList.remove("hidden");
+    if (!sexyRevealed) {
+      sexyRevealed = true;
+      els.sexyCeremony.classList.remove("reveal");
+      void els.sexyCeremony.offsetWidth;
+      els.sexyCeremony.classList.add("reveal");
+    }
+  }
+
   function renderMotmCeremony(data) {
     if (!els.motmCeremony) return false;
     const award = data?.awards?.motm;
@@ -242,9 +270,7 @@
     els.motmWinnerName.textContent = award.winner;
     els.motmWinnerVotes.textContent = `met ${votes} stem${votes === 1 ? "" : "men"}`;
     els.motmPosterArt.setAttribute("aria-label", `Man of the Match: ${award.winner}, met ${votes} stem${votes === 1 ? "" : "men"}`);
-    if (window.MOTM_POSTER_DATA) {
-      els.motmPosterArt.style.backgroundImage = `url("${window.MOTM_POSTER_DATA}")`;
-    }
+    if (window.MOTM_POSTER_DATA) els.motmPosterArt.style.backgroundImage = `url("${window.MOTM_POSTER_DATA}")`;
     els.motmCeremony.classList.remove("hidden");
     if (!motmRevealed) {
       motmRevealed = true;
@@ -254,6 +280,8 @@
     }
     els.form.classList.add("hidden");
     els.success.classList.add("hidden");
+    if (els.dotdCeremony) els.dotdCeremony.classList.add("hidden");
+    if (els.sexyCeremony) els.sexyCeremony.classList.add("hidden");
     clearMessage();
     els.phaseExplainer.textContent = "De stemming is gesloten · Man of the Match bekend";
     els.statusPill.className = "pill closed";
@@ -351,6 +379,7 @@
 
     renderMatch(data.match);
     renderDotdCeremony(data);
+    renderSexyCeremony(data);
     if (renderMotmCeremony(data)) return;
 
     const matchId = data.match?.matchId;
@@ -434,6 +463,9 @@
 
     if (els.motmPosterArt && window.MOTM_POSTER_DATA) {
       els.motmPosterArt.style.backgroundImage = `url("${window.MOTM_POSTER_DATA}")`;
+    }
+    if (els.sexyVisual && window.SEXY_MOMENT_DATA) {
+      els.sexyVisual.src = window.SEXY_MOMENT_DATA;
     }
 
     try {
