@@ -3,11 +3,30 @@
 .phase-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 18px 0; }
 .phase-button { min-height: 46px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.04); color: var(--ink); cursor: pointer; font-weight: 800; }
 .phase-button.active { border-color: var(--accent); background: rgba(138,215,248,.16); color: var(--accent-2); }
+.phase-button.ceremony-phase { border-color: rgba(255,209,132,.28); }
+.phase-button.ceremony-phase.active { border-color: var(--warn); background: rgba(255,209,132,.12); color: var(--warn); }
 .phase-button:disabled { opacity: .45; cursor: not-allowed; }
 .admin-actions { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; margin-top: 14px; }
 .secondary-button { min-height: 54px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.04); color: var(--ink); font-weight: 800; cursor: pointer; }
 .secondary-button:disabled { opacity: .42; cursor: not-allowed; }
 .compact-button { min-height: 54px; }
+.close-voting-button {
+  width: 100%;
+  min-height: 58px;
+  margin-top: 12px;
+  border: 1px solid rgba(255,209,132,.34);
+  border-radius: 16px;
+  color: var(--warn);
+  background: rgba(255,209,132,.08);
+  font-weight: 900;
+  cursor: pointer;
+}
+.close-voting-button.ready {
+  color: #171007;
+  background: linear-gradient(135deg, #ffe2a9, #ffd184);
+  box-shadow: 0 14px 36px rgba(255,209,132,.15);
+}
+.close-voting-button:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
 .admin-heading { margin-bottom: 12px; }
 .live-stats { display: grid; gap: 8px; margin: 4px 0 18px; }
 .stat-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 11px 12px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.035); }
@@ -15,6 +34,7 @@
 .admin-vote-form { gap: 14px; }
 .admin-link { text-align: center; margin: 22px 0 0; }
 .admin-link a { color: var(--accent); text-decoration: none; font-weight: 700; }
+.good-message { border-color: rgba(143,230,177,.32) !important; color: var(--good) !important; background: rgba(143,230,177,.08) !important; }
 @media (max-width: 760px) {
   .admin-grid { grid-template-columns: 1fr; }
   .phase-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
