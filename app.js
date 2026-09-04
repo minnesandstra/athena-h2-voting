@@ -29,6 +29,7 @@
     finalCeremonies: document.getElementById("final-ceremonies"),
     dotdWinnerName: document.getElementById("dotd-winner-name"),
     dotdWinnerVotes: document.getElementById("dotd-winner-votes"),
+    dotdVisual: document.getElementById("dotd-visual"),
     sexyWinnerName: document.getElementById("sexy-winner-name"),
     sexyWinnerVotes: document.getElementById("sexy-winner-votes"),
     sexyVisual: document.getElementById("sexy-visual"),
@@ -238,9 +239,11 @@
     els.statusPill.textContent = "Uitreiking";
 
     Promise.allSettled([
+      loadScriptOnce("dotd-image-data.js"),
       loadScriptOnce("sexy-moment-data.js"),
       loadScriptOnce("motm-poster-data.js")
     ]).then(() => {
+      if (window.DOTD_IMAGE_DATA) els.dotdVisual.src = window.DOTD_IMAGE_DATA;
       if (window.SEXY_MOMENT_DATA) els.sexyVisual.src = window.SEXY_MOMENT_DATA;
       if (window.MOTM_POSTER_DATA) els.motmPosterArt.style.backgroundImage = `url("${window.MOTM_POSTER_DATA}")`;
     });
