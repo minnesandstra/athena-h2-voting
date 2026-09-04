@@ -54,6 +54,19 @@
       </div>
     </section>
 
+    <section id="motm-ceremony" class="motm-ceremony hidden" aria-live="polite">
+      <div id="motm-poster-art" class="motm-poster-art" role="img" aria-label="Man of the Match uitreiking">
+        <div class="motm-poster-shade" aria-hidden="true"></div>
+        <div class="motm-dynamic-copy">
+          <p class="motm-team">ATHENA H2-O</p>
+          <p class="motm-label">MAN OF THE MATCH</p>
+          <h2 id="motm-winner-name">—</h2>
+          <p id="motm-winner-votes" class="motm-votes"></p>
+        </div>
+      </div>
+      <p class="motm-caption">🏆 De officiële Man of the Match</p>
+    </section>
+
     <div id="message" class="message hidden" role="status"></div>
 
     <form id="vote-form" class="vote-form" novalidate>
@@ -98,6 +111,7 @@
   </form>
 
   <script src="config.js"></script>
+  <script src="motm-poster-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
