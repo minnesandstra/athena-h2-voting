@@ -28,6 +28,7 @@ function doGet(e) {
     if (action === 'config') payload = getPublicConfig_(p.matchId || '');
     else if (action === 'receipt') payload = getReceipt_(p.submissionId || '');
     else if (action === 'results') payload = getPublicResults_(p.matchId || '');
+    else if (action === 'adminSetPhase') payload = adminSetPhase_(p.matchId || '', p.phase, p.pin || '');
     else payload = { ok: false, message: 'Onbekende actie.' };
     return jsonp_(payload, p.callback);
   } catch (err) {
@@ -110,6 +111,44 @@ function getPublicConfig_(requestedMatchId) {
       statusLabel: status.label
     }
   };
+}
+
+function adminSetPhase_(matchIdRaw, phaseRaw, pinRaw) {
+  validateAdminPin_(pinRaw);
+  const matchId = clean_(matchIdRaw, 80);
+  const targetPhase = Number(phaseRaw || 0);
+  if (!matchId) throw new Error('Wedstrijd ontbreekt.');
+  if (!Number.isInteger(targetPhase) || targetPhase < 1 || targetPhase > 6) throw new Error('Ongeldige fase.');
+
+  const sh = sheet_(APP.SHEETS.MATCHES);
+  const data = sh.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).trim());
+  const idCol = headers.indexOf('match_id');
+  const phaseCol = headers.indexOf('phase');
+  if (idCol === -1 || phaseCol === -1) throw new Error('Kolommen match_id/phase ontbreken in Matches.');
+
+  let rowIndex = -1;
+  for (let i = 1; i < data.length; i += 1) {
+    if (clean_(data[i][idCol], 80) === matchId) { rowIndex = i; break; }
+  }
+  if (rowIndex === -1) throw new Error('Wedstrijd niet gevonden.');
+
+  const currentPhase = phaseNumber_(data[rowIndex][phaseCol]);
+  if (targetPhase > currentPhase) {
+    const state = buildPhaseState_(matchId, targetPhase);
+    if (!state.ready) throw new Error(state.message || `Fase ${targetPhase} kan nog niet worden geopend.`);
+  }
+
+  sh.getRange(rowIndex + 1, phaseCol + 1).setValue(targetPhase);
+  SpreadsheetApp.flush();
+  return { ok: true, phase: targetPhase, message: `Fase ${targetPhase} is geopend.` };
+}
+
+function validateAdminPin_(pinRaw) {
+  const expected = clean_(PropertiesService.getScriptProperties().getProperty('ADMIN_PIN'), 100);
+  const supplied = clean_(pinRaw, 100);
+  if (!expected) throw new Error('ADMIN_PIN is nog niet ingesteld in Apps Script Script Properties.');
+  if (!supplied || supplied !== expected) throw new Error('Onjuiste admin-pincode.');
 }
 
 function buildNextPhasePreview_(matchId, currentPhase) {
@@ -199,7 +238,7 @@ function buildPhaseState_(matchId, phase) {
 
   if (phase === 4) {
     const votes = phaseVotes_(matchId, 3);
-    if (!votes.length) return { ready: false, choices: [], winners, message: 'Er zijn nog geen Sexy Moment-nominatiestemmen. Zet phase terug op 3 of laat eerst stemmen.' };
+    if (!votes.length) return { ready: false, choices: [], winners, message: 'Er zijn nog geen Sexy Moment-nominatiestemmen. Zet de phase terug op 3 of laat eerst stemmen.' };
     return { ready: true, choices: upsertNominations_(matchId, 'sexy', votes, afterDotd), winners };
   }
 
