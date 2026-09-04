@@ -85,6 +85,10 @@ function getPublicConfig_(requestedMatchId) {
   const status = effectiveStatus_(match);
   const phaseState = buildPhaseState_(matchId, phase);
   const votes = phaseVotes_(matchId, phase);
+  const players = activePlayers_();
+  const dotdAward = finalWinner_(matchId, 2, players);
+  const sexyAward = finalWinner_(matchId, 4, players);
+  const motmAward = finalWinner_(matchId, 6, players);
 
   return {
     ok: true,
@@ -99,6 +103,11 @@ function getPublicConfig_(requestedMatchId) {
     ready: phaseState.ready,
     readyMessage: phaseState.message || '',
     winners: phaseState.winners,
+    awards: {
+      dotd: { winner: dotdAward.label || '', votes: dotdAward.count || 0 },
+      sexy: { winner: sexyAward.label || '', votes: sexyAward.count || 0 },
+      motm: { winner: motmAward.label || '', votes: motmAward.count || 0 }
+    },
     nextPhasePreview: phase < 6 ? buildNextPhasePreview_(matchId, phase) : null,
     match: {
       matchId,
@@ -238,7 +247,7 @@ function buildPhaseState_(matchId, phase) {
 
   if (phase === 4) {
     const votes = phaseVotes_(matchId, 3);
-    if (!votes.length) return { ready: false, choices: [], winners, message: 'Er zijn nog geen Sexy Moment-nominatiestemmen. Zet de phase terug op 3 of laat eerst stemmen.' };
+    if (!votes.length) return { ready: false, choices: [], winners, message: 'Er zijn nog geen Sexy Moment-nominatiestemmen. Zet phase terug op 3 of laat eerst stemmen.' };
     return { ready: true, choices: upsertNominations_(matchId, 'sexy', votes, afterDotd), winners };
   }
 
