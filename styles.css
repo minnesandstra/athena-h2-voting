@@ -71,7 +71,8 @@ h1 { margin-bottom: 5px; font-size: clamp(32px, 7vw, 48px); line-height: 1; lett
 
 .match-card,
 .award-card,
-.success-card {
+.success-card,
+.ceremony-card {
   border: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(19,38,76,.92), rgba(11,24,53,.90));
   box-shadow: var(--shadow);
@@ -90,6 +91,33 @@ h1 { margin-bottom: 5px; font-size: clamp(32px, 7vw, 48px); line-height: 1; lett
 
 .match-card h2 { margin-bottom: 5px; font-size: 20px; }
 .match-card p { margin-bottom: 0; }
+
+.ceremony-card {
+  border-radius: 24px;
+  padding: 22px;
+  margin: 0 0 18px;
+  overflow: hidden;
+}
+.ceremony-copy { text-align: center; margin-bottom: 18px; }
+.ceremony-copy .eyebrow { color: var(--warn); }
+.ceremony-kicker { margin-bottom: 8px; color: var(--muted); font-weight: 700; }
+.ceremony-copy h2 { margin-bottom: 8px; font-size: clamp(34px, 8vw, 56px); letter-spacing: -.04em; }
+.ceremony-votes { margin: 0; color: var(--warn); font-size: 18px; font-weight: 800; }
+.ceremony-video { display: grid; gap: 10px; justify-items: center; }
+.ceremony-video iframe {
+  width: min(100%, 420px);
+  height: 620px;
+  border: 0;
+  border-radius: 18px;
+  background: rgba(255,255,255,.03);
+}
+.instagram-link {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.instagram-link:hover { text-decoration: underline; }
 
 .pill {
   flex: 0 0 auto;
@@ -135,9 +163,7 @@ h1 { margin-bottom: 5px; font-size: clamp(32px, 7vw, 48px); line-height: 1; lett
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
-.option {
-  position: relative;
-}
+.option { position: relative; }
 .option input {
   position: absolute;
   opacity: 0;
@@ -234,4 +260,6 @@ footer { padding: 28px 0 0; text-align: center; color: #71809d; font-size: 12px;
   .award-card { padding: 17px; }
   .award-heading { grid-template-columns: 44px 1fr; }
   .emoji { font-size: 29px; }
+  .ceremony-card { padding: 17px; }
+  .ceremony-video iframe { height: 560px; }
 }
