@@ -14,115 +14,21 @@
 </head>
 <body>
   <main class="shell">
-    <header class="hero">
-      <div class="brand-mark" aria-hidden="true">A</div>
-      <div>
-        <p class="eyebrow">ATHENA H2-O</p>
-        <h1>Match Awards</h1>
-        <p class="intro">Eerst Dick of the Day, dan Sexy Moment, daarna Man of the Match.</p>
-      </div>
-    </header>
-
-    <section class="match-card" aria-live="polite">
-      <div>
-        <p class="eyebrow">DEZE WEDSTRIJD</p>
-        <h2 id="match-title">Wedstrijd laden…</h2>
-        <p id="match-meta" class="muted"></p>
-        <p id="phase-explainer" class="muted"></p>
-      </div>
-      <span id="status-pill" class="pill">Laden…</span>
-    </section>
-
+    <header class="hero"><div class="brand-mark" aria-hidden="true">A</div><div><p class="eyebrow">ATHENA H2-O</p><h1>Match Awards</h1><p class="intro">Eerst Dick of the Day, dan Sexy Moment, daarna Man of the Match.</p></div></header>
+    <section class="match-card" aria-live="polite"><div><p class="eyebrow">DEZE WEDSTRIJD</p><h2 id="match-title">Wedstrijd laden…</h2><p id="match-meta" class="muted"></p><p id="phase-explainer" class="muted"></p></div><span id="status-pill" class="pill">Laden…</span></section>
     <section id="final-ceremonies" class="final-ceremonies hidden" aria-live="polite">
-      <div class="final-heading">
-        <p class="eyebrow">FASE 7 · UITREIKING</p>
-        <h2>De winnaars zijn bekend</h2>
-        <p>Alle drie de awards worden pas getoond nadat de admin de stemming heeft afgesloten.</p>
-      </div>
-
-      <section id="dotd-ceremony" class="ceremony-card">
-        <div class="ceremony-copy">
-          <p class="eyebrow">💩 DICK OF THE DAY</p>
-          <p class="ceremony-kicker">En de winnaar is…</p>
-          <h2 id="dotd-winner-name">—</h2>
-          <p id="dotd-winner-votes" class="ceremony-votes"></p>
-        </div>
-        <div class="dotd-visual-wrap">
-          <img id="dotd-visual" class="dotd-visual" loading="lazy" alt="Dick of the Day uitreiking" />
-        </div>
-      </section>
-
-      <section id="sexy-ceremony" class="sexy-ceremony">
-        <div class="sexy-copy">
-          <p class="eyebrow">🔥 SEXY MOMENT</p>
-          <p class="ceremony-kicker">Smooth operator van de wedstrijd…</p>
-          <h2 id="sexy-winner-name">—</h2>
-          <p id="sexy-winner-votes" class="sexy-votes"></p>
-        </div>
-        <div class="sexy-visual-wrap">
-          <img id="sexy-visual" class="sexy-visual" loading="lazy" alt="Sexy Moment uitreiking" />
-          <div class="sexy-glow" aria-hidden="true"></div>
-        </div>
-      </section>
-
-      <section id="motm-ceremony" class="motm-ceremony">
-        <div id="motm-poster-art" class="motm-poster-art" role="img" aria-label="Man of the Match uitreiking">
-          <div class="motm-poster-shade" aria-hidden="true"></div>
-          <div class="motm-dynamic-copy">
-            <p class="motm-team">ATHENA H2-O</p>
-            <p class="motm-label">MAN OF THE MATCH</p>
-            <h2 id="motm-winner-name">—</h2>
-            <p id="motm-winner-votes" class="motm-votes"></p>
-          </div>
-        </div>
-        <p class="motm-caption">🏆 De officiële Man of the Match</p>
-      </section>
+      <div class="final-heading"><p class="eyebrow">FASE 7 · UITREIKING</p><h2>De winnaars zijn bekend</h2><p>Alle drie de awards worden pas getoond nadat de admin de stemming heeft afgesloten.</p></div>
+      <section id="dotd-ceremony" class="ceremony-card"><div class="ceremony-copy"><p class="eyebrow">💩 DICK OF THE DAY</p><p class="ceremony-kicker">En de winnaar is…</p><h2 id="dotd-winner-name">—</h2><p id="dotd-winner-votes" class="ceremony-votes"></p></div><div class="dotd-visual-wrap"><img id="dotd-visual" class="dotd-visual" loading="lazy" alt="Dick of the Day uitreiking" /></div></section>
+      <section id="sexy-ceremony" class="sexy-ceremony"><div class="sexy-copy"><p class="eyebrow">🔥 SEXY MOMENT</p><p class="ceremony-kicker">Smooth operator van de wedstrijd…</p><h2 id="sexy-winner-name">—</h2><p id="sexy-winner-votes" class="sexy-votes"></p></div><div class="sexy-visual-wrap"><img id="sexy-visual" class="sexy-visual" loading="lazy" alt="Sexy Moment uitreiking" /><div class="sexy-glow" aria-hidden="true"></div></div></section>
+      <section id="motm-ceremony" class="motm-ceremony"><div id="motm-poster-art" class="motm-poster-art" role="img" aria-label="Man of the Match uitreiking"><div class="motm-poster-shade" aria-hidden="true"></div><div class="motm-dynamic-copy"><p class="motm-team">ATHENA H2-O</p><p class="motm-label">MAN OF THE MATCH</p><h2 id="motm-winner-name">—</h2><p id="motm-winner-votes" class="motm-votes"></p></div></div><p class="motm-caption">🏆 De officiële Man of the Match</p></section>
     </section>
-
     <div id="message" class="message hidden" role="status"></div>
-
-    <form id="vote-form" class="vote-form" novalidate>
-      <section class="award-card">
-        <div class="award-heading">
-          <span id="award-emoji" class="emoji" aria-hidden="true">💩</span>
-          <div>
-            <p id="phase-step" class="step">FASE 1 VAN 6</p>
-            <h2 id="award-title">Dick of the Day</h2>
-            <p id="award-help">Wie verdient een plek in de finale?</p>
-          </div>
-        </div>
-        <div id="award-options" class="option-grid" role="radiogroup" aria-label="Spelerkeuze"></div>
-      </section>
-
-      <section id="voter-code-wrap" class="award-card compact hidden">
-        <div class="field">
-          <label for="voter-code">Stemcode</label>
-          <input id="voter-code" type="text" autocomplete="one-time-code" maxlength="16" placeholder="Bijv. K7M2Q9" />
-        </div>
-      </section>
-
-      <button id="submit-button" class="submit-button" type="submit" disabled>
-        <span>Stem versturen</span>
-        <span aria-hidden="true">→</span>
-      </button>
-      <p class="privacy-note">Per browser kan één keer per fase worden gestemd.</p>
-    </form>
-
-    <section id="success-card" class="success-card hidden" aria-live="polite">
-      <div class="success-icon" aria-hidden="true">✓</div>
-      <h2>Stem binnen</h2>
-      <p id="success-message">Je stem is opgeslagen.</p>
-    </section>
-
+    <form id="vote-form" class="vote-form" novalidate><section class="award-card"><div class="award-heading"><span id="award-emoji" class="emoji" aria-hidden="true">💩</span><div><p id="phase-step" class="step">FASE 1 VAN 6</p><h2 id="award-title">Dick of the Day</h2><p id="award-help">Wie verdient een plek in de finale?</p></div></div><div id="award-options" class="option-grid" role="radiogroup" aria-label="Spelerkeuze"></div></section><section id="voter-code-wrap" class="award-card compact hidden"><div class="field"><label for="voter-code">Stemcode</label><input id="voter-code" type="text" autocomplete="one-time-code" maxlength="16" placeholder="Bijv. K7M2Q9" /></div></section><button id="submit-button" class="submit-button" type="submit" disabled><span>Stem versturen</span><span aria-hidden="true">→</span></button><p class="privacy-note">Per browser kan één keer per fase worden gestemd.</p></form>
+    <section id="success-card" class="success-card hidden" aria-live="polite"><div class="success-icon" aria-hidden="true">✓</div><h2>Stem binnen</h2><p id="success-message">Je stem is opgeslagen.</p></section>
     <footer><p>AthenA H2-O · seizoen 2026/27</p></footer>
   </main>
-
-  <iframe id="post-target" name="post-target" title="Stemverwerking" class="hidden-frame"></iframe>
-  <form id="post-form" method="post" target="post-target" class="hidden">
-    <input id="post-payload" type="hidden" name="payload" />
-  </form>
-
-  <script src="config.js"></script>
-  <script src="app.js"></script>
+  <iframe id="post-target" name="post-target" title="Stemverwerking" class="hidden-frame"></iframe><form id="post-form" method="post" target="post-target" class="hidden"><input id="post-payload" type="hidden" name="payload" /></form>
+  <script src="config.js?v=5"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
