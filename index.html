@@ -33,52 +33,51 @@
       <span id="status-pill" class="pill">Laden…</span>
     </section>
 
-    <section id="dotd-ceremony" class="ceremony-card hidden" aria-live="polite">
-      <div class="ceremony-copy">
-        <p class="eyebrow">💩 DICK OF THE DAY</p>
-        <p class="ceremony-kicker">En de winnaar is…</p>
-        <h2 id="dotd-winner-name">—</h2>
-        <p id="dotd-winner-votes" class="ceremony-votes"></p>
+    <section id="final-ceremonies" class="final-ceremonies hidden" aria-live="polite">
+      <div class="final-heading">
+        <p class="eyebrow">FASE 7 · UITREIKING</p>
+        <h2>De winnaars zijn bekend</h2>
+        <p>Alle drie de awards worden pas getoond nadat de admin de stemming heeft afgesloten.</p>
       </div>
-      <div class="ceremony-video">
-        <iframe
-          id="dotd-video"
-          title="Dick of the Day uitreiking"
-          loading="lazy"
-          allowtransparency="true"
-          allowfullscreen
-          frameborder="0"
-          scrolling="no"
-          src="https://www.instagram.com/reel/DUijmZRjo1A/embed/">
-        </iframe>
-        <a class="instagram-link" href="https://www.instagram.com/reel/DUijmZRjo1A/" target="_blank" rel="noopener noreferrer">Bekijk de video op Instagram ↗</a>
-      </div>
-    </section>
 
-    <section id="sexy-ceremony" class="sexy-ceremony hidden" aria-live="polite">
-      <div class="sexy-copy">
-        <p class="eyebrow">🔥 SEXY MOMENT</p>
-        <p class="ceremony-kicker">Smooth operator van de wedstrijd…</p>
-        <h2 id="sexy-winner-name">—</h2>
-        <p id="sexy-winner-votes" class="sexy-votes"></p>
-      </div>
-      <div class="sexy-visual-wrap">
-        <img id="sexy-visual" class="sexy-visual" alt="Sexy Moment uitreiking" />
-        <div class="sexy-glow" aria-hidden="true"></div>
-      </div>
-    </section>
-
-    <section id="motm-ceremony" class="motm-ceremony hidden" aria-live="polite">
-      <div id="motm-poster-art" class="motm-poster-art" role="img" aria-label="Man of the Match uitreiking">
-        <div class="motm-poster-shade" aria-hidden="true"></div>
-        <div class="motm-dynamic-copy">
-          <p class="motm-team">ATHENA H2-O</p>
-          <p class="motm-label">MAN OF THE MATCH</p>
-          <h2 id="motm-winner-name">—</h2>
-          <p id="motm-winner-votes" class="motm-votes"></p>
+      <section id="dotd-ceremony" class="ceremony-card">
+        <div class="ceremony-copy">
+          <p class="eyebrow">💩 DICK OF THE DAY</p>
+          <p class="ceremony-kicker">En de winnaar is…</p>
+          <h2 id="dotd-winner-name">—</h2>
+          <p id="dotd-winner-votes" class="ceremony-votes"></p>
         </div>
-      </div>
-      <p class="motm-caption">🏆 De officiële Man of the Match</p>
+        <div class="ceremony-video-link">
+          <p>De officiële uitreikvideo staat op Instagram.</p>
+          <a class="instagram-button" href="https://www.instagram.com/reel/DUijmZRjo1A/" target="_blank" rel="noopener noreferrer">▶ Bekijk Dick of the Day-video</a>
+        </div>
+      </section>
+
+      <section id="sexy-ceremony" class="sexy-ceremony">
+        <div class="sexy-copy">
+          <p class="eyebrow">🔥 SEXY MOMENT</p>
+          <p class="ceremony-kicker">Smooth operator van de wedstrijd…</p>
+          <h2 id="sexy-winner-name">—</h2>
+          <p id="sexy-winner-votes" class="sexy-votes"></p>
+        </div>
+        <div class="sexy-visual-wrap">
+          <img id="sexy-visual" class="sexy-visual" loading="lazy" alt="Sexy Moment uitreiking" />
+          <div class="sexy-glow" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <section id="motm-ceremony" class="motm-ceremony">
+        <div id="motm-poster-art" class="motm-poster-art" role="img" aria-label="Man of the Match uitreiking">
+          <div class="motm-poster-shade" aria-hidden="true"></div>
+          <div class="motm-dynamic-copy">
+            <p class="motm-team">ATHENA H2-O</p>
+            <p class="motm-label">MAN OF THE MATCH</p>
+            <h2 id="motm-winner-name">—</h2>
+            <p id="motm-winner-votes" class="motm-votes"></p>
+          </div>
+        </div>
+        <p class="motm-caption">🏆 De officiële Man of the Match</p>
+      </section>
     </section>
 
     <div id="message" class="message hidden" role="status"></div>
@@ -125,8 +124,6 @@
   </form>
 
   <script src="config.js"></script>
-  <script src="sexy-moment-data.js"></script>
-  <script src="motm-poster-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
