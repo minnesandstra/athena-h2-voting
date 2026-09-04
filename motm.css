@@ -1,0 +1,106 @@
+.motm-ceremony {
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.motm-poster-art {
+  position: relative;
+  width: min(100%, 620px);
+  aspect-ratio: 4 / 5;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid rgba(255, 217, 120, .28);
+  border-radius: 26px;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, .45), 0 0 50px rgba(75, 138, 255, .12);
+}
+
+.motm-poster-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, transparent 0%, transparent 49%, rgba(4, 14, 40, .18) 56%, rgba(4, 14, 40, .94) 69%, rgba(4, 14, 40, .995) 100%),
+    linear-gradient(90deg, rgba(3, 10, 30, .08), transparent 38%, transparent 62%, rgba(3, 10, 30, .08));
+}
+
+.motm-dynamic-copy {
+  position: absolute;
+  z-index: 2;
+  left: 6%;
+  right: 6%;
+  bottom: 5.5%;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 3px 18px rgba(0,0,0,.75);
+}
+
+.motm-team {
+  margin: 0 0 7px;
+  color: #e9c977;
+  font-size: clamp(11px, 2.5vw, 15px);
+  font-weight: 800;
+  letter-spacing: .28em;
+}
+
+.motm-label {
+  margin: 0 0 12px;
+  color: #fff;
+  font-size: clamp(18px, 4.4vw, 31px);
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.motm-dynamic-copy h2 {
+  width: 100%;
+  margin: 0;
+  padding: 12px 14px 13px;
+  border: 1px solid rgba(231, 200, 121, .52);
+  border-radius: 10px;
+  color: #f7f9ff;
+  background: linear-gradient(180deg, rgba(19, 43, 88, .96), rgba(9, 25, 58, .98));
+  box-shadow: inset 0 0 30px rgba(91, 151, 255, .12), 0 6px 22px rgba(0,0,0,.35);
+  font-size: clamp(31px, 8vw, 62px);
+  line-height: .98;
+  font-weight: 900;
+  letter-spacing: -.035em;
+  overflow-wrap: anywhere;
+}
+
+.motm-votes {
+  margin: 13px 0 0;
+  color: #f3df9f;
+  font-size: clamp(14px, 3.5vw, 21px);
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: none;
+}
+
+.motm-caption {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.motm-ceremony.reveal .motm-dynamic-copy {
+  animation: motmReveal .7s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes motmReveal {
+  from { opacity: 0; transform: translateY(18px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motm-ceremony.reveal .motm-dynamic-copy { animation: none; }
+}
+
+@media (max-width: 560px) {
+  .motm-poster-art { border-radius: 20px; }
+  .motm-dynamic-copy { left: 5%; right: 5%; bottom: 4.5%; }
+  .motm-dynamic-copy h2 { padding: 10px 10px 11px; }
+}
