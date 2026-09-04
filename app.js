@@ -24,7 +24,10 @@
     success: document.getElementById("success-card"),
     successMessage: document.getElementById("success-message"),
     postForm: document.getElementById("post-form"),
-    postPayload: document.getElementById("post-payload")
+    postPayload: document.getElementById("post-payload"),
+    dotdCeremony: document.getElementById("dotd-ceremony"),
+    dotdWinnerName: document.getElementById("dotd-winner-name"),
+    dotdWinnerVotes: document.getElementById("dotd-winner-votes")
   };
 
   let state = {
@@ -206,6 +209,20 @@
         : "Kies de winnaar uit de drie finalisten. De live stand ververst automatisch.";
   }
 
+  function renderDotdCeremony(data) {
+    if (!els.dotdCeremony) return;
+    const award = data?.awards?.dotd;
+    const shouldShow = Number(data?.phase || 0) >= 3 && award?.winner;
+    if (!shouldShow) {
+      els.dotdCeremony.classList.add("hidden");
+      return;
+    }
+    els.dotdWinnerName.textContent = award.winner;
+    const votes = Number(award.votes || 0);
+    els.dotdWinnerVotes.textContent = `${votes} finalestem${votes === 1 ? "" : "men"}`;
+    els.dotdCeremony.classList.remove("hidden");
+  }
+
   function renderActive(data) {
     state = {
       match: data.match,
@@ -293,6 +310,8 @@
       showMessage("De website en Apps Script gebruiken niet dezelfde versie. Deploy de nieuwste Code.gs opnieuw als 'Nieuwe versie'.");
       return;
     }
+
+    renderDotdCeremony(data);
 
     const matchId = data.match?.matchId;
     const serverPhase = Number(data.phase || 1);
