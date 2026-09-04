@@ -1,3 +1,41 @@
+.final-ceremonies {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.final-heading {
+  padding: 24px 20px 4px;
+  text-align: center;
+}
+.final-heading h2 {
+  margin-bottom: 8px;
+  font-size: clamp(30px, 7vw, 48px);
+  letter-spacing: -.04em;
+}
+.final-heading p:last-child { color: var(--muted); }
+
+.ceremony-video-link {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+}
+.ceremony-video-link p { margin: 0; color: var(--muted); }
+.instagram-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  padding: 0 18px;
+  border: 1px solid rgba(138,215,248,.35);
+  border-radius: 14px;
+  color: #071128;
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .motm-ceremony {
   margin: 0 0 20px;
   text-align: center;
@@ -14,6 +52,7 @@
   background-position: center top;
   background-repeat: no-repeat;
   background-size: cover;
+  background-color: #0a1735;
   box-shadow: 0 26px 80px rgba(0, 0, 0, .45), 0 0 50px rgba(75, 138, 255, .12);
 }
 
@@ -84,19 +123,6 @@
   color: var(--muted);
   font-size: 13px;
   font-weight: 700;
-}
-
-.motm-ceremony.reveal .motm-dynamic-copy {
-  animation: motmReveal .7s cubic-bezier(.2,.8,.2,1) both;
-}
-
-@keyframes motmReveal {
-  from { opacity: 0; transform: translateY(18px) scale(.985); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .motm-ceremony.reveal .motm-dynamic-copy { animation: none; }
 }
 
 @media (max-width: 560px) {
