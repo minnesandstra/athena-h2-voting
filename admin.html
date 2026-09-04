@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AthenA H2-O Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <main class="shell admin-shell">
+    <header class="hero">
+      <div class="brand-mark">A</div>
+      <div>
+        <p class="eyebrow">ATHENA H2-O · ADMIN</p>
+        <h1>Stembeheer</h1>
+        <p class="intro">Stem mee, bekijk live standen en zet de wedstrijd naar de volgende fase.</p>
+      </div>
+    </header>
+
+    <section class="match-card">
+      <div>
+        <h2 id="match-title">Wedstrijd laden…</h2>
+        <p id="match-meta" class="muted"></p>
+      </div>
+      <span id="status-pill" class="pill">Laden</span>
+    </section>
+
+    <div id="message" class="message hidden" role="status"></div>
+
+    <section class="admin-grid">
+      <div class="award-card">
+        <p class="step">ADMIN TOEGANG</p>
+        <h2>Rondes bedienen</h2>
+        <div class="field">
+          <label for="admin-pin">Admin-pincode</label>
+          <input id="admin-pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Pincode" />
+          <p class="hint">De pincode wordt niet in GitHub opgeslagen.</p>
+        </div>
+
+        <div class="phase-overview" id="phase-overview" aria-label="Fases"></div>
+
+        <div class="admin-actions">
+          <button id="previous-phase" type="button" class="secondary-button">← Vorige fase</button>
+          <button id="next-phase" type="button" class="submit-button compact-button"><span>Volgende fase</span><span>→</span></button>
+        </div>
+        <p id="phase-note" class="hint"></p>
+      </div>
+
+      <div class="award-card">
+        <p id="phase-step" class="step">FASE</p>
+        <div class="award-heading admin-heading">
+          <div id="award-emoji" class="emoji">💩</div>
+          <div>
+            <h2 id="award-title">Laden…</h2>
+            <p id="award-help">Live stemmen en standen.</p>
+          </div>
+        </div>
+
+        <div id="live-stats" class="live-stats"></div>
+
+        <form id="admin-vote-form" class="vote-form admin-vote-form">
+          <div id="award-options" class="option-grid"></div>
+          <button id="vote-button" type="submit" class="submit-button" disabled>
+            <span>Stem als admin-browser</span><span>→</span>
+          </button>
+          <p class="privacy-note">Deze stem telt mee en gebruikt dezelfde één-stem-per-browser-per-fase-regel als de gewone stemsite.</p>
+        </form>
+      </div>
+    </section>
+
+    <p class="admin-link"><a href="./">← Naar gewone stemsite</a></p>
+  </main>
+
+  <iframe name="post-target" class="hidden-frame" title="Verborgen formulierdoel"></iframe>
+  <form id="post-form" method="post" target="post-target" class="hidden">
+    <input id="post-payload" type="hidden" name="payload" />
+  </form>
+
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
