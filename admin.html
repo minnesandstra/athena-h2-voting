@@ -48,6 +48,7 @@
         <button id="close-voting" type="button" class="close-voting-button" disabled>
           <span>🏆 Stemming afsluiten & uitreiking starten</span>
         </button>
+        <button id="reset-match" type="button" class="secondary-button">↻ Wedstrijd volledig resetten</button>
         <p id="phase-note" class="hint"></p>
       </div>
 
@@ -75,11 +76,6 @@
 
     <p class="admin-link"><a href="./">← Naar gewone stemsite</a></p>
   </main>
-
-  <iframe name="post-target" class="hidden-frame" title="Verborgen formulierdoel"></iframe>
-  <form id="post-form" method="post" target="post-target" class="hidden">
-    <input id="post-payload" type="hidden" name="payload" />
-  </form>
 
   <script src="config.js"></script>
   <script src="admin.js"></script>
