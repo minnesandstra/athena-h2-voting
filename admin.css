@@ -1,0 +1,22 @@
+.admin-shell { width: min(980px, calc(100% - 28px)); }
+.admin-grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 18px; }
+.phase-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 18px 0; }
+.phase-button { min-height: 46px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.04); color: var(--ink); cursor: pointer; font-weight: 800; }
+.phase-button.active { border-color: var(--accent); background: rgba(138,215,248,.16); color: var(--accent-2); }
+.phase-button:disabled { opacity: .45; cursor: not-allowed; }
+.admin-actions { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; margin-top: 14px; }
+.secondary-button { min-height: 54px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.04); color: var(--ink); font-weight: 800; cursor: pointer; }
+.secondary-button:disabled { opacity: .42; cursor: not-allowed; }
+.compact-button { min-height: 54px; }
+.admin-heading { margin-bottom: 12px; }
+.live-stats { display: grid; gap: 8px; margin: 4px 0 18px; }
+.stat-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 11px 12px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.035); }
+.stat-row strong { color: var(--accent-2); }
+.admin-vote-form { gap: 14px; }
+.admin-link { text-align: center; margin: 22px 0 0; }
+.admin-link a { color: var(--accent); text-decoration: none; font-weight: 700; }
+@media (max-width: 760px) {
+  .admin-grid { grid-template-columns: 1fr; }
+  .phase-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-actions { grid-template-columns: 1fr; }
+}
