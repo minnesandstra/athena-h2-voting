@@ -94,6 +94,7 @@ function getPublicConfig_(requestedMatchId) {
     ok: true,
     requireVoterCode: APP.REQUIRE_VOTER_CODE,
     phase,
+    displayPhase: status.status === 'closed' ? 7 : phase,
     phaseTitle: phaseInfo.title,
     category: phaseInfo.category,
     round: phaseInfo.round,
@@ -108,7 +109,7 @@ function getPublicConfig_(requestedMatchId) {
       sexy: { winner: sexyAward.label || '', votes: sexyAward.count || 0 },
       motm: { winner: motmAward.label || '', votes: motmAward.count || 0 }
     },
-    nextPhasePreview: phase < 6 ? buildNextPhasePreview_(matchId, phase) : null,
+    nextPhasePreview: status.status !== 'closed' && phase < 6 ? buildNextPhasePreview_(matchId, phase) : null,
     match: {
       matchId,
       date: asDateString_(match.date),
@@ -127,14 +128,15 @@ function adminSetPhase_(matchIdRaw, phaseRaw, pinRaw) {
   const matchId = clean_(matchIdRaw, 80);
   const targetPhase = Number(phaseRaw || 0);
   if (!matchId) throw new Error('Wedstrijd ontbreekt.');
-  if (!Number.isInteger(targetPhase) || targetPhase < 1 || targetPhase > 6) throw new Error('Ongeldige fase.');
+  if (!Number.isInteger(targetPhase) || targetPhase < 1 || targetPhase > 7) throw new Error('Ongeldige fase.');
 
   const sh = sheet_(APP.SHEETS.MATCHES);
   const data = sh.getDataRange().getValues();
   const headers = data[0].map(h => String(h).trim());
   const idCol = headers.indexOf('match_id');
   const phaseCol = headers.indexOf('phase');
-  if (idCol === -1 || phaseCol === -1) throw new Error('Kolommen match_id/phase ontbreken in Matches.');
+  const statusCol = headers.indexOf('status');
+  if (idCol === -1 || phaseCol === -1 || statusCol === -1) throw new Error('Kolommen match_id/phase/status ontbreken in Matches.');
 
   let rowIndex = -1;
   for (let i = 1; i < data.length; i += 1) {
@@ -143,14 +145,28 @@ function adminSetPhase_(matchIdRaw, phaseRaw, pinRaw) {
   if (rowIndex === -1) throw new Error('Wedstrijd niet gevonden.');
 
   const currentPhase = phaseNumber_(data[rowIndex][phaseCol]);
+  const currentStatus = clean_(data[rowIndex][statusCol], 20).toLowerCase();
+
+  if (targetPhase === 7) {
+    if (currentPhase !== 6) throw new Error('Ga eerst naar fase 6 voordat je de stemming afsluit.');
+    const players = activePlayers_();
+    const motmWinner = finalWinner_(matchId, 6, players);
+    if (!motmWinner.label) throw new Error('Er is nog geen Man of the Match-finalestem. Laat eerst minstens één stem uitbrengen in fase 6.');
+    recalculateResults_(matchId);
+    sh.getRange(rowIndex + 1, statusCol + 1).setValue('closed');
+    SpreadsheetApp.flush();
+    return { ok: true, phase: 7, closed: true, message: 'Stemming gesloten. De uitreiking staat nu live.' };
+  }
+
   if (targetPhase > currentPhase) {
     const state = buildPhaseState_(matchId, targetPhase);
     if (!state.ready) throw new Error(state.message || `Fase ${targetPhase} kan nog niet worden geopend.`);
   }
 
   sh.getRange(rowIndex + 1, phaseCol + 1).setValue(targetPhase);
+  if (currentStatus === 'closed') sh.getRange(rowIndex + 1, statusCol + 1).setValue('open');
   SpreadsheetApp.flush();
-  return { ok: true, phase: targetPhase, message: `Fase ${targetPhase} is geopend.` };
+  return { ok: true, phase: targetPhase, closed: false, message: `Fase ${targetPhase} is geopend.` };
 }
 
 function validateAdminPin_(pinRaw) {
@@ -376,7 +392,7 @@ function saveReceipt_(submissionId, ok, message) {
 function effectiveStatus_(match) {
   const manual = clean_(match.status, 20).toLowerCase();
   if (manual === 'open') return { status: 'open', label: 'Stemmen open' };
-  if (manual === 'closed') return { status: 'closed', label: 'Gesloten' };
+  if (manual === 'closed') return { status: 'closed', label: 'Uitreiking' };
   const openOverride = parseDateTime_(match.open_at);
   const closeOverride = parseDateTime_(match.close_at);
   const now = new Date();
