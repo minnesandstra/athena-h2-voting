@@ -72,7 +72,8 @@ h1 { margin-bottom: 5px; font-size: clamp(32px, 7vw, 48px); line-height: 1; lett
 .match-card,
 .award-card,
 .success-card,
-.ceremony-card {
+.ceremony-card,
+.sexy-ceremony {
   border: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(19,38,76,.92), rgba(11,24,53,.90));
   box-shadow: var(--shadow);
@@ -118,6 +119,72 @@ h1 { margin-bottom: 5px; font-size: clamp(32px, 7vw, 48px); line-height: 1; lett
   text-decoration: none;
 }
 .instagram-link:hover { text-decoration: underline; }
+
+.sexy-ceremony {
+  position: relative;
+  overflow: hidden;
+  border-radius: 26px;
+  padding: 22px;
+  margin: 0 0 18px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,87,167,.23), transparent 45%),
+    linear-gradient(180deg, rgba(36,17,56,.95), rgba(11,24,53,.95));
+}
+.sexy-copy {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.sexy-copy .eyebrow { color: #ff9dd0; }
+.sexy-copy h2 {
+  margin: 4px 0 8px;
+  font-size: clamp(36px, 9vw, 62px);
+  letter-spacing: -.045em;
+  text-shadow: 0 8px 32px rgba(255,72,155,.28);
+}
+.sexy-votes {
+  margin: 0;
+  color: #ffd1e7;
+  font-size: 18px;
+  font-weight: 800;
+}
+.sexy-visual-wrap {
+  position: relative;
+  width: min(100%, 360px);
+  margin: 0 auto;
+  isolation: isolate;
+}
+.sexy-visual {
+  display: block;
+  width: 100%;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.36);
+  transform-origin: 50% 70%;
+  animation: sexy-sway 2.6s ease-in-out infinite;
+}
+.sexy-glow {
+  position: absolute;
+  inset: 14% -12% -8%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,73,164,.36), transparent 65%);
+  filter: blur(18px);
+  animation: sexy-pulse 2s ease-in-out infinite;
+}
+.sexy-ceremony.reveal { animation: sexy-reveal .65s cubic-bezier(.2,.8,.2,1); }
+@keyframes sexy-reveal {
+  from { opacity: 0; transform: scale(.94) translateY(18px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes sexy-sway {
+  0%, 100% { transform: rotate(-1.1deg) scale(1); }
+  50% { transform: rotate(1.1deg) scale(1.018); }
+}
+@keyframes sexy-pulse {
+  0%, 100% { opacity: .55; transform: scale(.96); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
 
 .pill {
   flex: 0 0 auto;
@@ -251,6 +318,10 @@ h1 { margin-bottom: 5px; font-size: clamp(32px, 7vw, 48px); line-height: 1; lett
 footer { padding: 28px 0 0; text-align: center; color: #71809d; font-size: 12px; }
 .hidden-frame { width: 0; height: 0; border: 0; position: absolute; }
 
+@media (prefers-reduced-motion: reduce) {
+  .sexy-visual, .sexy-glow, .sexy-ceremony.reveal { animation: none; }
+}
+
 @media (max-width: 560px) {
   .shell { width: min(100% - 20px, 760px); padding-top: 24px; }
   .hero { align-items: flex-start; }
@@ -260,6 +331,6 @@ footer { padding: 28px 0 0; text-align: center; color: #71809d; font-size: 12px;
   .award-card { padding: 17px; }
   .award-heading { grid-template-columns: 44px 1fr; }
   .emoji { font-size: 29px; }
-  .ceremony-card { padding: 17px; }
+  .ceremony-card, .sexy-ceremony { padding: 17px; }
   .ceremony-video iframe { height: 560px; }
 }
