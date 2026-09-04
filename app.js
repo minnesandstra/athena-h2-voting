@@ -4,7 +4,8 @@
   const cfg = window.APP_CONFIG || {};
   const API_URL = String(cfg.API_URL || "").trim();
   const API_CONFIGURED = /^https:\/\/script\.google\.com\//.test(API_URL);
-  const POLL_MS = 5000;
+  const ACTIVE_POLL_MS = 6000;
+  const WAITING_POLL_MS = 3000;
 
   const els = {
     matchTitle: document.getElementById("match-title"),
@@ -25,14 +26,12 @@
     successMessage: document.getElementById("success-message"),
     postForm: document.getElementById("post-form"),
     postPayload: document.getElementById("post-payload"),
-    dotdCeremony: document.getElementById("dotd-ceremony"),
+    finalCeremonies: document.getElementById("final-ceremonies"),
     dotdWinnerName: document.getElementById("dotd-winner-name"),
     dotdWinnerVotes: document.getElementById("dotd-winner-votes"),
-    sexyCeremony: document.getElementById("sexy-ceremony"),
     sexyWinnerName: document.getElementById("sexy-winner-name"),
     sexyWinnerVotes: document.getElementById("sexy-winner-votes"),
     sexyVisual: document.getElementById("sexy-visual"),
-    motmCeremony: document.getElementById("motm-ceremony"),
     motmPosterArt: document.getElementById("motm-poster-art"),
     motmWinnerName: document.getElementById("motm-winner-name"),
     motmWinnerVotes: document.getElementById("motm-winner-votes")
@@ -49,13 +48,12 @@
     ready: true,
     readyMessage: "",
     requireVoterCode: false,
-    demo: !API_CONFIGURED,
     submitting: false,
     waiting: false
   };
+  let pollTimer = null;
   let pollBusy = false;
-  let motmRevealed = false;
-  let sexyRevealed = false;
+  const loadedScripts = new Map();
 
   const CATEGORY_META = {
     dotd: { title: "Dick of the Day", emoji: "💩" },
@@ -82,14 +80,8 @@
   function localVoteKey(matchId, phase) {
     return `athena_h2_voted_${matchId}_phase_${phase}`;
   }
-
-  function hasLocalVote(matchId, phase) {
-    return localStorage.getItem(localVoteKey(matchId, phase)) === "1";
-  }
-
-  function markLocalVote(matchId, phase) {
-    localStorage.setItem(localVoteKey(matchId, phase), "1");
-  }
+  function hasLocalVote(matchId, phase) { return localStorage.getItem(localVoteKey(matchId, phase)) === "1"; }
+  function markLocalVote(matchId, phase) { localStorage.setItem(localVoteKey(matchId, phase), "1"); }
 
   function jsonp(params, timeoutMs = 8000) {
     return new Promise((resolve, reject) => {
@@ -111,6 +103,20 @@
     });
   }
 
+  function loadScriptOnce(src) {
+    if (loadedScripts.has(src)) return loadedScripts.get(src);
+    const promise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = src;
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error(`Kon ${src} niet laden.`));
+      document.head.appendChild(script);
+    });
+    loadedScripts.set(src, promise);
+    return promise;
+  }
+
   function formatDate(dateString) {
     if (!dateString) return "";
     const d = new Date(`${dateString}T12:00:00`);
@@ -126,13 +132,8 @@
       .replaceAll("'", "&#039;");
   }
 
-  function statMap(stats) {
-    return new Map((stats || []).map(item => [String(item.player), Number(item.votes || 0)]));
-  }
-
-  function selected() {
-    return document.querySelector('input[name="award"]:checked')?.value || "";
-  }
+  function statMap(stats) { return new Map((stats || []).map(item => [String(item.player), Number(item.votes || 0)])); }
+  function selected() { return document.querySelector('input[name="award"]:checked')?.value || ""; }
 
   function renderOptions(items, stats, { disabled = false, showCounts = false, liveRanking = false } = {}) {
     const previous = selected();
@@ -158,48 +159,38 @@
     els.message.textContent = text;
     els.message.classList.remove("hidden");
   }
-
   function clearMessage() {
     els.message.textContent = "";
     els.message.classList.add("hidden");
   }
-
   function showSuccess(message) {
     els.form.classList.add("hidden");
     els.success.classList.remove("hidden");
     els.successMessage.textContent = message;
     clearMessage();
   }
-
   function showForm() {
     els.form.classList.remove("hidden");
     els.success.classList.add("hidden");
   }
-
   function setSubmitText(text) {
     const span = els.submit.querySelector("span:first-child");
     if (span) span.textContent = text;
   }
-
   function setFormDisabled(disabled) {
-    Array.from(els.form.elements).forEach(el => {
-      if (el !== els.submit) el.disabled = disabled;
-    });
+    Array.from(els.form.elements).forEach(el => { if (el !== els.submit) el.disabled = disabled; });
     if (disabled) els.submit.disabled = true;
   }
 
   function validateReady() {
     if (state.submitting || state.waiting || !state.ready) return false;
     if (!state.match || state.match.status !== "open") return false;
-    if (hasLocalVote(state.match.matchId, state.phase) && !state.demo) return false;
+    if (hasLocalVote(state.match.matchId, state.phase)) return false;
     if (!selected()) return false;
     if (state.requireVoterCode && !els.voterCode.value.trim()) return false;
     return true;
   }
-
-  function updateButton() {
-    els.submit.disabled = !validateReady();
-  }
+  function updateButton() { els.submit.disabled = !validateReady(); }
 
   function renderMatch(match) {
     els.matchTitle.textContent = `${match.home} – ${match.away}`;
@@ -213,79 +204,46 @@
     els.awardTitle.textContent = meta.title;
     els.phaseStep.textContent = `FASE ${view.phase} VAN 6`;
     els.awardHelp.textContent = waiting
-      ? "Je vorige stem is binnen. Deze fase opent automatisch zodra de eigenaar hem in de Sheet activeert."
+      ? "Je vorige stem is binnen. De volgende fase wordt automatisch actief zodra de admin hem opent."
       : view.round === 1
-        ? "Kies één speler. Na je stem ga je automatisch door naar de volgende fase."
+        ? "Kies één speler. Na je stem ga je automatisch naar de wachtruimte voor de volgende fase."
         : "Kies de winnaar uit de drie finalisten. De live stand ververst automatisch.";
   }
 
-  function renderDotdCeremony(data) {
-    if (!els.dotdCeremony) return;
-    const award = data?.awards?.dotd;
-    const shouldShow = Number(data?.phase || 0) >= 3 && award?.winner && data?.match?.status !== "closed";
-    if (!shouldShow) {
-      els.dotdCeremony.classList.add("hidden");
-      return;
-    }
-    els.dotdWinnerName.textContent = award.winner;
-    const votes = Number(award.votes || 0);
-    els.dotdWinnerVotes.textContent = `${votes} finalestem${votes === 1 ? "" : "men"}`;
-    els.dotdCeremony.classList.remove("hidden");
+  function hideCeremonies() {
+    els.finalCeremonies.classList.add("hidden");
   }
 
-  function renderSexyCeremony(data) {
-    if (!els.sexyCeremony) return;
-    const award = data?.awards?.sexy;
-    const shouldShow = Number(data?.phase || 0) >= 5 && award?.winner && data?.match?.status !== "closed";
-    if (!shouldShow) {
-      els.sexyCeremony.classList.add("hidden");
-      sexyRevealed = false;
-      return;
-    }
-    const votes = Number(award.votes || 0);
-    els.sexyWinnerName.textContent = award.winner;
-    els.sexyWinnerVotes.textContent = `${votes} finalestem${votes === 1 ? "" : "men"}`;
-    if (window.SEXY_MOMENT_DATA && !els.sexyVisual.src) els.sexyVisual.src = window.SEXY_MOMENT_DATA;
-    els.sexyVisual.alt = `Sexy Moment: ${award.winner}`;
-    els.sexyCeremony.classList.remove("hidden");
-    if (!sexyRevealed) {
-      sexyRevealed = true;
-      els.sexyCeremony.classList.remove("reveal");
-      void els.sexyCeremony.offsetWidth;
-      els.sexyCeremony.classList.add("reveal");
-    }
-  }
+  async function renderFinalCeremonies(data) {
+    const dotd = data?.awards?.dotd || {};
+    const sexy = data?.awards?.sexy || {};
+    const motm = data?.awards?.motm || {};
+    if (data?.match?.status !== "closed") return false;
 
-  function renderMotmCeremony(data) {
-    if (!els.motmCeremony) return false;
-    const award = data?.awards?.motm;
-    const shouldShow = data?.match?.status === "closed" && award?.winner;
-    if (!shouldShow) {
-      els.motmCeremony.classList.add("hidden");
-      motmRevealed = false;
-      return false;
-    }
-
-    const votes = Number(award.votes || 0);
-    els.motmWinnerName.textContent = award.winner;
-    els.motmWinnerVotes.textContent = `met ${votes} stem${votes === 1 ? "" : "men"}`;
-    els.motmPosterArt.setAttribute("aria-label", `Man of the Match: ${award.winner}, met ${votes} stem${votes === 1 ? "" : "men"}`);
-    if (window.MOTM_POSTER_DATA) els.motmPosterArt.style.backgroundImage = `url("${window.MOTM_POSTER_DATA}")`;
-    els.motmCeremony.classList.remove("hidden");
-    if (!motmRevealed) {
-      motmRevealed = true;
-      els.motmCeremony.classList.remove("reveal");
-      void els.motmCeremony.offsetWidth;
-      els.motmCeremony.classList.add("reveal");
-    }
     els.form.classList.add("hidden");
     els.success.classList.add("hidden");
-    if (els.dotdCeremony) els.dotdCeremony.classList.add("hidden");
-    if (els.sexyCeremony) els.sexyCeremony.classList.add("hidden");
     clearMessage();
-    els.phaseExplainer.textContent = "De stemming is gesloten · Man of the Match bekend";
+
+    els.dotdWinnerName.textContent = dotd.winner || "Nog geen winnaar";
+    els.dotdWinnerVotes.textContent = `${Number(dotd.votes || 0)} finalestem${Number(dotd.votes || 0) === 1 ? "" : "men"}`;
+    els.sexyWinnerName.textContent = sexy.winner || "Nog geen winnaar";
+    els.sexyWinnerVotes.textContent = `${Number(sexy.votes || 0)} finalestem${Number(sexy.votes || 0) === 1 ? "" : "men"}`;
+    els.motmWinnerName.textContent = motm.winner || "Nog geen winnaar";
+    els.motmWinnerVotes.textContent = `met ${Number(motm.votes || 0)} stem${Number(motm.votes || 0) === 1 ? "" : "men"}`;
+    els.motmPosterArt.setAttribute("aria-label", `Man of the Match: ${motm.winner || "onbekend"}`);
+
+    els.finalCeremonies.classList.remove("hidden");
+    els.phaseExplainer.textContent = "Fase 7 · stemming gesloten · uitreiking";
     els.statusPill.className = "pill closed";
-    els.statusPill.textContent = "Uitslag bekend";
+    els.statusPill.textContent = "Uitreiking";
+
+    Promise.allSettled([
+      loadScriptOnce("sexy-moment-data.js"),
+      loadScriptOnce("motm-poster-data.js")
+    ]).then(() => {
+      if (window.SEXY_MOMENT_DATA) els.sexyVisual.src = window.SEXY_MOMENT_DATA;
+      if (window.MOTM_POSTER_DATA) els.motmPosterArt.style.backgroundImage = `url("${window.MOTM_POSTER_DATA}")`;
+    });
     return true;
   }
 
@@ -301,16 +259,14 @@
       ready: data.ready !== false,
       readyMessage: String(data.readyMessage || ""),
       requireVoterCode: Boolean(data.requireVoterCode),
-      demo: Boolean(data.demo),
       submitting: false,
       waiting: false
     };
 
-    if (!state.match) return showMessage("Geen wedstrijd gevonden.");
+    hideCeremonies();
     showForm();
     setFormDisabled(false);
     setSubmitText("Stem versturen");
-    renderMatch(state.match);
     renderHeader(state, false);
 
     const meta = CATEGORY_META[state.category] || CATEGORY_META.dotd;
@@ -318,21 +274,26 @@
     els.phaseExplainer.textContent = finalLive
       ? `${meta.title} · finale · ${state.voteCount} stemmen · live stand`
       : `${meta.title} · nominaties · ${state.voteCount} stemmen binnen`;
-    els.statusPill.className = `pill ${state.match.status === "open" ? "open" : state.match.status === "closed" ? "closed" : ""}`;
+    els.statusPill.className = `pill ${state.match.status === "open" ? "open" : ""}`;
     els.statusPill.textContent = state.match.status === "open" ? `Fase ${state.phase} open` : (state.match.statusLabel || "Gesloten");
-
     renderOptions(state.choices, state.choiceStats, { showCounts: finalLive, liveRanking: finalLive });
     els.voterCodeWrap.classList.toggle("hidden", !state.requireVoterCode);
 
     if (!state.ready) showMessage(state.readyMessage || "Deze fase kan nog niet starten.");
-    else if (state.match.status !== "open") showMessage(state.match.status === "closed" ? "De stemming is gesloten." : "De stemming is nog niet geopend.");
+    else if (state.match.status !== "open") showMessage("De stemming is nog niet geopend.");
     else clearMessage();
     updateButton();
+    schedulePoll(ACTIVE_POLL_MS);
   }
 
   function renderWaiting(data) {
     const preview = data.nextPhasePreview;
-    if (!preview) return showSuccess("Je stem is opgeslagen. Dit was de laatste fase.");
+    if (!preview) {
+      hideCeremonies();
+      showSuccess("Je stem in fase 6 is opgeslagen. Wacht tot de admin de stemming afsluit en de uitreiking start.");
+      schedulePoll(WAITING_POLL_MS);
+      return;
+    }
 
     state = {
       match: data.match,
@@ -345,16 +306,14 @@
       ready: false,
       readyMessage: String(preview.readyMessage || ""),
       requireVoterCode: Boolean(data.requireVoterCode),
-      demo: Boolean(data.demo),
       submitting: false,
       waiting: true
     };
 
+    hideCeremonies();
     showForm();
-    renderMatch(state.match);
     renderHeader(state, true);
     setSubmitText(`Wachten op fase ${state.phase}`);
-
     const meta = CATEGORY_META[state.category] || CATEGORY_META.dotd;
     const finalPreview = state.round === 2;
     els.phaseExplainer.textContent = finalPreview
@@ -365,28 +324,28 @@
     renderOptions(state.choices, state.choiceStats, { disabled: true, showCounts: finalPreview, liveRanking: finalPreview });
     els.voterCodeWrap.classList.toggle("hidden", !state.requireVoterCode);
     setFormDisabled(true);
-    showMessage(`Je stem voor fase ${Number(data.phase)} is opgeslagen. Fase ${state.phase} wordt automatisch actief zodra de eigenaar in de Sheet phase = ${state.phase} kiest.`);
+    showMessage(`Je vorige stem is opgeslagen. Fase ${state.phase} wordt automatisch actief zodra de admin hem opent.`);
+    schedulePoll(WAITING_POLL_MS);
   }
 
-  function render(data) {
-    const isNewBackend = data?.ok && Object.prototype.hasOwnProperty.call(data, "phase") && Array.isArray(data.choices) && Object.prototype.hasOwnProperty.call(data, "choiceStats");
-    if (!isNewBackend) {
+  async function render(data) {
+    const valid = data?.ok && data.match && Object.prototype.hasOwnProperty.call(data, "phase") && Array.isArray(data.choices);
+    if (!valid) {
       els.submit.disabled = true;
-      renderOptions([]);
       showMessage("De website en Apps Script gebruiken niet dezelfde versie. Deploy de nieuwste Code.gs opnieuw als 'Nieuwe versie'.");
       return;
     }
 
     renderMatch(data.match);
-    renderDotdCeremony(data);
-    renderSexyCeremony(data);
-    if (renderMotmCeremony(data)) return;
+    if (await renderFinalCeremonies(data)) {
+      schedulePoll(15000);
+      return;
+    }
 
-    const matchId = data.match?.matchId;
+    const matchId = data.match.matchId;
     const serverPhase = Number(data.phase || 1);
-    const alreadyVoted = matchId && hasLocalVote(matchId, serverPhase) && !data.demo;
-    if (alreadyVoted && serverPhase < 6) renderWaiting(data);
-    else if (alreadyVoted && serverPhase === 6) showSuccess("Je hebt in alle fasen gestemd. Bedankt! De Man of the Match verschijnt zodra de stemming wordt gesloten.");
+    const alreadyVoted = hasLocalVote(matchId, serverPhase);
+    if (alreadyVoted) renderWaiting(data);
     else renderActive(data);
   }
 
@@ -406,7 +365,7 @@
     const matchId = new URLSearchParams(location.search).get("match") || state.match?.matchId || "";
     const data = await jsonp({ action: "config", matchId });
     if (!data?.ok) throw new Error(data?.message || "Configuratie kon niet worden geladen.");
-    render(data);
+    await render(data);
   }
 
   async function handleSubmit(event) {
@@ -440,6 +399,7 @@
       const receipt = await pollReceipt(submissionId);
       if (!receipt.ok) throw new Error(receipt.message || "Stem kon niet worden opgeslagen.");
       markLocalVote(matchId, submittedPhase);
+      state.submitting = false;
       await loadConfig();
     } catch (err) {
       state.submitting = false;
@@ -450,8 +410,16 @@
     }
   }
 
+  function schedulePoll(ms) {
+    if (pollTimer) clearTimeout(pollTimer);
+    pollTimer = setTimeout(poll, ms);
+  }
+
   async function poll() {
-    if (pollBusy || state.submitting || !API_CONFIGURED) return;
+    if (pollBusy || state.submitting || !API_CONFIGURED || document.hidden) {
+      schedulePoll(state.waiting ? WAITING_POLL_MS : ACTIVE_POLL_MS);
+      return;
+    }
     pollBusy = true;
     try { await loadConfig(); } catch (_) {} finally { pollBusy = false; }
   }
@@ -460,22 +428,12 @@
     els.form.addEventListener("submit", handleSubmit);
     els.form.addEventListener("change", updateButton);
     els.form.addEventListener("input", updateButton);
-
-    if (els.motmPosterArt && window.MOTM_POSTER_DATA) {
-      els.motmPosterArt.style.backgroundImage = `url("${window.MOTM_POSTER_DATA}")`;
-    }
-    if (els.sexyVisual && window.SEXY_MOMENT_DATA) {
-      els.sexyVisual.src = window.SEXY_MOMENT_DATA;
-    }
-
     try {
       await loadConfig();
     } catch (err) {
       showMessage(err.message || "De site kon de backend niet laden.");
       els.submit.disabled = true;
     }
-
-    window.setInterval(poll, POLL_MS);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
   }
 
