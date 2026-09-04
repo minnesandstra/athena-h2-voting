@@ -93,6 +93,13 @@ h1 { margin-bottom: 5px; font-size: clamp(32px, 7vw, 48px); line-height: 1; lett
 .match-card h2 { margin-bottom: 5px; font-size: 20px; }
 .match-card p { margin-bottom: 0; }
 
+.final-heading {
+  text-align: center;
+  margin: 8px 0 22px;
+}
+.final-heading h2 { font-size: clamp(30px, 7vw, 46px); margin-bottom: 8px; }
+.final-heading p:last-child { color: var(--muted); }
+
 .ceremony-card {
   border-radius: 24px;
   padding: 22px;
@@ -104,21 +111,19 @@ h1 { margin-bottom: 5px; font-size: clamp(32px, 7vw, 48px); line-height: 1; lett
 .ceremony-kicker { margin-bottom: 8px; color: var(--muted); font-weight: 700; }
 .ceremony-copy h2 { margin-bottom: 8px; font-size: clamp(34px, 8vw, 56px); letter-spacing: -.04em; }
 .ceremony-votes { margin: 0; color: var(--warn); font-size: 18px; font-weight: 800; }
-.ceremony-video { display: grid; gap: 10px; justify-items: center; }
-.ceremony-video iframe {
-  width: min(100%, 420px);
-  height: 620px;
-  border: 0;
-  border-radius: 18px;
-  background: rgba(255,255,255,.03);
+.dotd-visual-wrap {
+  width: min(100%, 430px);
+  margin: 0 auto;
 }
-.instagram-link {
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
+.dotd-visual {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 20px;
+  border: 1px solid rgba(255,209,132,.22);
+  box-shadow: 0 24px 60px rgba(0,0,0,.36);
 }
-.instagram-link:hover { text-decoration: underline; }
 
 .sexy-ceremony {
   position: relative;
@@ -332,5 +337,4 @@ footer { padding: 28px 0 0; text-align: center; color: #71809d; font-size: 12px;
   .award-heading { grid-template-columns: 44px 1fr; }
   .emoji { font-size: 29px; }
   .ceremony-card, .sexy-ceremony { padding: 17px; }
-  .ceremony-video iframe { height: 560px; }
 }
