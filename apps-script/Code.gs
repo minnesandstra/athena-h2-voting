@@ -83,6 +83,7 @@ function getPublicConfig_(requestedMatchId) {
   const phaseInfo = APP.PHASES[phase];
   const status = effectiveStatus_(match);
   const phaseState = buildPhaseState_(matchId, phase);
+  const votes = phaseVotes_(matchId, phase);
 
   return {
     ok: true,
@@ -92,10 +93,12 @@ function getPublicConfig_(requestedMatchId) {
     category: phaseInfo.category,
     round: phaseInfo.round,
     choices: phaseState.choices,
-    voteCount: phaseVotes_(matchId, phase).length,
+    choiceStats: choiceStats_(phaseState.choices, votes),
+    voteCount: votes.length,
     ready: phaseState.ready,
     readyMessage: phaseState.message || '',
     winners: phaseState.winners,
+    nextPhasePreview: phase < 6 ? buildNextPhasePreview_(matchId, phase) : null,
     match: {
       matchId,
       date: asDateString_(match.date),
@@ -107,6 +110,35 @@ function getPublicConfig_(requestedMatchId) {
       statusLabel: status.label
     }
   };
+}
+
+function buildNextPhasePreview_(matchId, currentPhase) {
+  const nextPhase = currentPhase + 1;
+  if (!APP.PHASES[nextPhase]) return null;
+  const info = APP.PHASES[nextPhase];
+  const state = buildPhaseState_(matchId, nextPhase);
+  const statsPhase = info.round === 2 ? currentPhase : nextPhase;
+  const statsVotes = phaseVotes_(matchId, statsPhase);
+  return {
+    phase: nextPhase,
+    phaseTitle: info.title,
+    category: info.category,
+    round: info.round,
+    choices: state.choices,
+    choiceStats: choiceStats_(state.choices, statsVotes),
+    voteCount: statsVotes.length,
+    ready: state.ready,
+    readyMessage: state.message || ''
+  };
+}
+
+function choiceStats_(choices, votes) {
+  const counts = {};
+  (votes || []).forEach(r => {
+    const player = clean_(r.player, 80);
+    if (player) counts[player] = (counts[player] || 0) + 1;
+  });
+  return (choices || []).map(player => ({ player, votes: counts[player] || 0 }));
 }
 
 function validateAndStoreVote_(vote) {
@@ -144,7 +176,7 @@ function validateAndStoreVote_(vote) {
   }
 
   const count = phaseVotes_(matchId, phase).length;
-  return `Je stem is opgeslagen. Deze fase heeft nu ${count} stem${count === 1 ? '' : 'men'}. De eigenaar bepaalt wanneer de volgende fase opent.`;
+  return `Je stem is opgeslagen. Deze fase heeft nu ${count} stem${count === 1 ? '' : 'men'}. De volgende fase verschijnt automatisch zodra de eigenaar die opent.`;
 }
 
 function buildPhaseState_(matchId, phase) {
